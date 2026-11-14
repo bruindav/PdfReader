@@ -5,6 +5,7 @@
 //        niet afhangt van een bestand/content://-adres dat later niet meer leesbaar is; duidelijke meldingen
 //        als opslaan via de Android-app mislukt.
 // fix-5: ⋮-menu en info-venster (help.html, privacy.html, disclaimer.html), zie infovenster.js.
+// fix-6: "Recent geopend" (laatste 6 PDF's, kopie op dit toestel), zie recent.js; wissen wist ook die lijst.
 // PdfReader – hoofdmodule: koppelt UI, loader, viewer, aantekeningen, opslaan en service worker.
 import { bus } from './eventbus.js';
 import { loadPdf, LoadError } from './loader.js';
@@ -16,6 +17,7 @@ import { initInstall, isIOS, maybeShowIosHelpOnce } from './install.js';
 import { Annotations } from './annotations.js';
 import { isAndroidApp, initAndroidBridge, AndroidSaveError } from './android-bridge.js';
 import { initInfo } from './infovenster.js';
+import { initRecent } from './recent.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -193,7 +195,7 @@ async function openBlob(blob, name) {
   const zoom = (saved && saved.zoom) || getZoomPref() || (isMobileLayout() ? 'width' : 'auto');
 
   // Wachtwoord alleen in het geheugen (nodig om de opgeslagen PDF met aantekeningen te controleren).
-  doc = { blob, name: fileName, fp, password: lastPassword };
+  doc = { blob, name: fileName, fp, password: lastPassword, locked: lastPassword != null };
   setTitle(fileName || 'Naamloos document');
   showState('lezen');
   suppressPref = true;
@@ -211,6 +213,21 @@ async function openBlob(blob, name) {
   announce(`PDF geopend, ${viewer.pageCount} ${viewer.pageCount === 1 ? 'pagina' : "pagina's"}`);
   bus.emit('document-loaded', { name: fileName, pages: viewer.pageCount, fingerprint: fp });
   annotations.onDocumentLoaded(pdf);
+  rememberCurrent();
+}
+
+// fix-6: sleutel gelijk aan die van de aantekeningen (beide /ID's), zodat aantekeningen terugkomen.
+function docKey(pdf) {
+  const fps = (pdf && pdf.fingerprints) || [];
+  return fps[0] ? `${fps[0]}|${fps[1] || ''}` : null;
+}
+
+function rememberCurrent() {
+  if (!doc || !viewer.pdf) return;
+  recent.remember({
+    key: docKey(viewer.pdf), name: doc.name || 'Naamloos document', blob: doc.blob,
+    pdf: viewer.pdf, pages: viewer.pageCount, locked: doc.locked,
+  }).catch(() => {});
 }
 
 function showError(code, keepDoc) {
@@ -611,14 +628,30 @@ function openHelp() {
 $('link-help').addEventListener('click', openHelp);
 async function wisGeschiedenis() {
   clearHistory();
+  await recent.clear(); // fix-6: ook de lijst "Recent geopend" en de kopieën
   const done = await annotations.clearStored();
-  toast(done ? 'Geschiedenis gewist.' : 'Geschiedenis gewist. Aantekeningen zijn bewaard.', { type: 'succes' });
+  toast(done ? 'Geschiedenis en recente documenten gewist.' : 'Geschiedenis en recente documenten gewist. Aantekeningen zijn bewaard.', { type: 'succes' });
   return done;
 }
 $('btn-wis').addEventListener('click', wisGeschiedenis);
 
 // fix-5: ⋮-menu en info-pagina's; de knop "Gegevens wissen" op privacy.html roept wisGeschiedenis aan.
-initInfo({ onWis: wisGeschiedenis, beforeOpen: () => closeZoomMenu() });
+const info = initInfo({ onWis: wisGeschiedenis, beforeOpen: () => closeZoomMenu() });
+
+// fix-6: recent geopend
+const recent = initRecent({
+  openBlob,
+  currentKey: () => (doc && viewer.pdf ? docKey(viewer.pdf) : null),
+  rememberCurrent,
+  confirm: confirmDialog,
+  toast,
+  announce,
+  openDialog,
+});
+$('menu-recent').addEventListener('click', () => {
+  info.closeMenu(true);
+  recent.show();
+});
 
 // ---------- Knoppen openen ----------
 
@@ -815,4 +848,4 @@ takeSharedFile().then((shared) => {
 });
 
 // Voor tests en latere modules (bijv. annotaties).
-window.pdfReader = Object.freeze({ viewer, bus, annotations, ZOOM_MIN, ZOOM_MAX });
+window.pdfReader = Object.freeze({ viewer, bus, annotations, recent, ZOOM_MIN, ZOOM_MAX });

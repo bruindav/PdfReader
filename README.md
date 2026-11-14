@@ -2,6 +2,7 @@
 <!-- fix-2 -->
 <!-- fix-3 -->
 <!-- fix-5 -->
+<!-- fix-6 -->
 # PdfReader
 
 Een rustige, reclamevrije PDF-lezer die in de browser draait: **https://bruindav.github.io/PdfReader/**
@@ -14,6 +15,7 @@ Een rustige, reclamevrije PDF-lezer die in de browser draait: **https://bruindav
 - Werkt offline na het eerste bezoek.
 - **Aantekenen** (fix-2): pen, lijn, ovaal, rechthoek en tekst, in 8 vaste kleuren of een eigen kleur, 3 lijndiktes en 3 tekstgroottes. Selecteren, verplaatsen, formaat wijzigen, verwijderen, ongedaan maken/opnieuw. Op de telefoon teken je met 1 vinger en scroll/zoom je met 2 vingers.
 - **Help, Privacy en Disclaimer** (fix-5): [help.html](https://bruindav.github.io/PdfReader/help.html), [privacy.html](https://bruindav.github.io/PdfReader/privacy.html) en [disclaimer.html](https://bruindav.github.io/PdfReader/disclaimer.html). In de app bereikbaar via het ⋮-menu rechtsboven (Help / Privacy / Disclaimer / Over) en via Help op het startscherm. Ze openen in een venster boven de app, zodat een open PDF open blijft; de terugknop (ook in de Android-app) sluit het venster. Werken offline.
+- **Recent geopend** (fix-6): de laatste 6 geopende PDF's staan op het startscherm (miniatuur, naam, datum, aantal pagina's) en via ⋮ → *Recent geopend* als er al een document open is. PdfReader bewaart een **kopie van het bestand alleen op dit toestel**, zodat ook PDF's uit een bank-app (waarvan de leesrechten verlopen) later weer opengaan, ook offline en in de Android-app. Per document *Uit lijst verwijderen*, *Lijst wissen*, en schakelaar *Recente documenten onthouden* (standaard aan; uitzetten wist de lijst). Bij PDF's met wachtwoord wordt alleen het versleutelde origineel bewaard (geen miniatuur, nooit het wachtwoord). Aantekeningen komen bij heropenen terug.
 - Aantekeningen worden automatisch op je toestel bewaard (per document, in IndexedDB; geen PDF-inhoud) en komen terug als je dezelfde PDF opnieuw opent.
 - Opslaan **met aantekeningen** (echte PDF-annotaties, zichtbaar in elke PDF-app, optioneel vastgezet in de pagina) of het **origineel** (byte-voor-byte ongewijzigd). Werkt ook bij beveiligde PDF's zoals bankafschriften.
 
@@ -109,6 +111,14 @@ Modules: `js/annotations.js` (tekenmodus, invoer, selectie, tekst), `js/annot-mo
    - Overwogen en afgewezen: ontsleutelen met een WebAssembly-tool (qpdf-wasm; zou `'wasm-unsafe-eval'` in de CSP vereisen en levert een onbeveiligde kopie) en pagina's als afbeelding opnieuw opbouwen (tekst niet meer selecteerbaar).
 
 Na het maken wordt het resultaat altijd met pdf.js opnieuw geopend ter controle; mislukt dat, dan volgt een melding met de knop "Origineel opslaan".
+
+### Recent geopend (fix-6)
+
+- Modules: `js/recent-store.js` (IndexedDB-database `pdfreader-recent`, stores `recent` = metagegevens + miniatuur en `bytes` = kopie van de PDF) en `js/recent.js` (startscherm, dialoog, schakelaar, miniatuur).
+- Sleutel = beide pdf.js-vingerafdrukken (`/ID`), dezelfde als bij de aantekeningen: opnieuw openen zet het document bovenaan (geen dubbele), en aantekeningen komen terug.
+- Max. 6 documenten; het oudste valt eraf. Bestanden > 50 MB worden niet bewaard (eenmalige melding). Bij `QuotaExceededError` wordt het oudste andere document verwijderd en opnieuw geprobeerd.
+- Miniatuur: pagina 1, 160 px breed, WebP (anders JPEG); niet bij PDF's die een wachtwoord vroegen. Getoond via object-URL's die na het laden direct worden vrijgegeven. Namen altijd via `textContent`.
+- Instelling in localStorage `pdfreader.recent` (standaard aan). "Gegevens wissen" (privacypagina) en "Geschiedenis wissen" wissen ook deze lijst.
 
 ### Schermindeling op telefoons (fix-5)
 

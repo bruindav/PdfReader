@@ -1,5 +1,6 @@
 <!doctype html>
 <!-- fix-5 -->
+<!-- fix-6: Recent geopend -->
 <html lang="nl">
 <head>
   <meta charset="utf-8">
@@ -35,6 +36,7 @@
       <h2 id="toc-titel">Op deze pagina</h2>
       <ol>
         <li><a href="#openen">Een PDF openen</a></li>
+        <li><a href="#recent">Recent geopend</a></li>
         <li><a href="#lezen">Lezen en zoomen</a></li>
         <li><a href="#aantekenen">Aantekenen</a></li>
         <li><a href="#opslaan">Opslaan en delen</a></li>
@@ -54,7 +56,19 @@
     </ul>
     <p>Is de PDF beveiligd met een wachtwoord, dan vraagt PdfReader daarom. Het wachtwoord wordt nergens bewaard.</p>
 
-    <h2 id="lezen">2. Lezen en zoomen</h2>
+    <h2 id="recent">2. Recent geopend</h2>
+    <p>PdfReader onthoudt de <strong>laatste 6 PDF's</strong> die je opende. Zo open je ze snel opnieuw, zonder door mappen te zoeken.</p>
+    <ul>
+      <li><strong>Op het startscherm</strong> staat de lijst <span class="knopnaam">Recent geopend</span>, met een kleine afbeelding, de naam, wanneer je hem opende en het aantal pagina's. Tik op een document om het te openen.</li>
+      <li><strong>Heb je al een PDF open?</strong> Tik rechtsboven op <span class="knopnaam">⋮</span> en kies <span class="knopnaam">Recent geopend</span>.</li>
+      <li>Het werkt ook als de PDF uit een andere app kwam (bijvoorbeeld je bank-app) en die het bestand niet meer deelt: PdfReader bewaart <strong>een kopie op dit toestel</strong>. Ook zonder internet.</li>
+      <li>Je aantekeningen staan er bij opnieuw openen weer bij. Bij een PDF met wachtwoord vraagt PdfReader opnieuw om het wachtwoord (dat wordt nooit bewaard).</li>
+      <li><strong>Weghalen:</strong> tik op het kruisje naast een document (<em>Uit lijst verwijderen</em>) of op <span class="knopnaam">Lijst wissen</span>.</li>
+      <li><strong>Niet onthouden:</strong> zet in <span class="knopnaam">⋮ → Recent geopend</span> de schakelaar <em>Recente documenten onthouden</em> uit. De lijst wordt dan meteen gewist.</li>
+      <li>PDF's groter dan 50 MB komen niet in de lijst. Is de opslag van je toestel vol, dan valt het oudste document eerder af.</li>
+    </ul>
+
+    <h2 id="lezen">3. Lezen en zoomen</h2>
     <ul>
       <li><strong>Bladeren:</strong> scroll omhoog en omlaag. Rechtsboven zie je op welke pagina je bent (bijvoorbeeld <span class="knopnaam">2 / 5</span>). Tik daarop om naar een pagina te gaan.</li>
       <li><strong>Groter en kleiner:</strong> gebruik <span class="knopnaam">Groter</span> en <span class="knopnaam">Kleiner</span>, of knijp met twee vingers. Dubbeltikken wisselt tussen passend op breedte en 200%.</li>
@@ -63,7 +77,7 @@
     </ul>
     <p>PdfReader onthoudt per document op welke pagina je was en hoe ver je had ingezoomd.</p>
 
-    <h2 id="aantekenen">3. Aantekenen</h2>
+    <h2 id="aantekenen">4. Aantekenen</h2>
     <p>Tik op <span class="knopnaam">Teken</span> (op de computer: <span class="knopnaam">Aantekenen</span> of toets <kbd>A</kbd>). Onderin (of bovenin op de computer) verschijnt de gereedschapsbalk.</p>
     <dl class="gereedschap">
       <dt>Selecteren</dt><dd>Tik op een aantekening om hem te kiezen. Daarna kun je hem verplaatsen, groter of kleiner maken (aan de hoekjes), een andere kleur geven of verwijderen.</dd>
@@ -82,7 +96,7 @@
     </div>
     <p>Je aantekeningen worden automatisch op dit toestel bewaard bij dit document. Open je dezelfde PDF later opnieuw, dan staan ze er weer. Wil je ze meenemen of naar iemand sturen, sla de PDF dan op <em>met aantekeningen</em>.</p>
 
-    <h2 id="opslaan">4. Opslaan en delen</h2>
+    <h2 id="opslaan">5. Opslaan en delen</h2>
     <ol>
       <li>Tik op <span class="knopnaam">Opslaan</span>.</li>
       <li>Pas zo nodig de bestandsnaam aan.</li>
@@ -104,7 +118,7 @@
     </ul>
     <p>Met <span class="knopnaam">Delen…</span> (als je toestel dat kan) stuur je de PDF direct naar een andere app, zoals e-mail of WhatsApp.</p>
 
-    <h2 id="installeren">5. Installeren als app</h2>
+    <h2 id="installeren">6. Installeren als app</h2>
     <h3>Android: de PdfReader-app (aanrader)</h3>
     <p>Met de app verschijnt PdfReader bij <em>Openen met</em> en kun je hem als standaard-app voor PDF's instellen.</p>
     <ol>
@@ -120,7 +134,7 @@
     <p>In Chrome of Edge staat rechts in de adresbalk een installeer-icoon, of gebruik <span class="knopnaam">Installeer app</span> in PdfReader.</p>
     <p>Na installatie werkt PdfReader ook zonder internet.</p>
 
-    <h2 id="vragen">6. Veelgestelde vragen</h2>
+    <h2 id="vragen">7. Veelgestelde vragen</h2>
     <details>
       <summary>Mijn PDF van de bank is beveiligd. Kan ik hem openen?</summary>
       <p>Ja. Vraagt PdfReader om een wachtwoord, vul dan het wachtwoord in dat je van de bank of afzender kreeg. Veel bank-PDF's zijn alleen beveiligd tegen wijzigen of zijn digitaal ondertekend; die opent PdfReader gewoon.</p>
@@ -130,6 +144,10 @@
       <summary>Waar zijn mijn aantekeningen?</summary>
       <p>Ze staan op dit toestel, in deze browser of app, en horen bij dit ene document. Open je precies dezelfde PDF opnieuw, dan zie je ze weer.</p>
       <p>Op een ander toestel, in een andere browser of na het wissen van de app- of browsergegevens zijn ze er niet. Sla de PDF <em>met aantekeningen</em> op om ze veilig te bewaren of mee te nemen.</p>
+    </details>
+    <details>
+      <summary>Hoe haal ik een PDF uit "Recent geopend" weg?</summary>
+      <p>Tik op het kruisje naast het document, of op <span class="knopnaam">Lijst wissen</span>. De kopie op dit toestel wordt dan verwijderd; je originele bestand (bijvoorbeeld in je Downloads of je bank-app) blijft gewoon bestaan. Via <span class="knopnaam">⋮ → Privacy</span> wis je alles in één keer.</p>
     </details>
     <details>
       <summary>Het opgeslagen bestand is 0 KB of ik krijg een foutmelding bij opslaan.</summary>
@@ -149,13 +167,13 @@
     </details>
     <p>Meer weten over wat er met je gegevens gebeurt? Lees de <a href="privacy.html">privacyverklaring</a> en de <a href="disclaimer.html">disclaimer</a>.</p>
 
-    <h2 id="over">7. Over PdfReader</h2>
-    <p>PdfReader versie <strong data-versie>fix-5</strong>.</p>
+    <h2 id="over">8. Over PdfReader</h2>
+    <p>PdfReader versie <strong data-versie>fix-6</strong>.</p>
     <p>Een gratis PDF-lezer zonder reclame, zonder account en zonder beperkingen bij het opslaan. Gemaakt door DigiDave. Vragen of ideeën? Kijk op de <a href="https://bruindav.github.io/DigidaveStore/" target="_blank" rel="noopener noreferrer">DigiDave Store-pagina</a>.</p>
     <p>PdfReader gebruikt open-source onderdelen: pdf.js (Apache-2.0) en pdf-lib (MIT). Zie de <a href="disclaimer.html#licenties">disclaimer</a> voor de licenties.</p>
   </main>
   <footer class="info-voet">
-    <p>PdfReader versie <span data-versie>fix-5</span> · gratis en zonder reclame · <a href="https://bruindav.github.io/DigidaveStore/" target="_blank" rel="noopener noreferrer">DigiDave Store</a></p>
+    <p>PdfReader versie <span data-versie>fix-6</span> · gratis en zonder reclame · <a href="https://bruindav.github.io/DigidaveStore/" target="_blank" rel="noopener noreferrer">DigiDave Store</a></p>
   </footer>
 </body>
 </html>

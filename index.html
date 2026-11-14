@@ -2,6 +2,7 @@
 <!-- fix-1 -->
 <!-- fix-2 -->
 <!-- fix-5: robuuste onderbalk, ⋮-menu (Help, Privacy, Disclaimer, Over) en info-pagina's in een venster -->
+<!-- fix-6: "Recent geopend" op het startscherm en via het ⋮-menu (dialoog), schakelaar "Recente documenten onthouden" -->
 <html lang="nl">
 <head>
   <meta charset="utf-8">
@@ -55,6 +56,8 @@
     <symbol id="i-meer" viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="12" cy="18.5" r="1.3"/></symbol>
     <symbol id="i-terug" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></symbol>
+    <!-- fix-6 -->
+    <symbol id="i-recent" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
   </svg>
 
   <noscript><p class="noscript">PdfReader heeft JavaScript nodig. Zet JavaScript aan of gebruik een recente browser.</p></noscript>
@@ -120,10 +123,13 @@
     </div>
 
     <!-- fix-5: ⋮-menu met info-pagina's -->
-    <button type="button" id="btn-meer" class="knop-icoon btn-meer" aria-label="Meer: help, privacy en info" aria-haspopup="menu" aria-expanded="false" aria-controls="meermenu" title="Meer">
+    <button type="button" id="btn-meer" class="knop-icoon btn-meer" aria-label="Meer: recent geopend, help, privacy en info" aria-haspopup="menu" aria-expanded="false" aria-controls="meermenu" title="Meer">
       <svg class="icon" aria-hidden="true"><use href="#i-meer"/></svg>
     </button>
     <div id="meermenu" class="popover meermenu" role="menu" aria-label="Meer" hidden>
+      <!-- fix-6 -->
+      <button type="button" role="menuitem" id="menu-recent" class="menu-recent"><svg class="icon" aria-hidden="true"><use href="#i-recent"/></svg>Recent geopend</button>
+      <div class="menu-scheiding" role="separator"></div>
       <button type="button" role="menuitem" data-info="help.html">Help</button>
       <button type="button" role="menuitem" data-info="privacy.html">Privacy</button>
       <button type="button" role="menuitem" data-info="disclaimer.html">Disclaimer</button>
@@ -156,6 +162,14 @@
           <span class="alleen-desktop">Je bestand blijft op je eigen computer.</span>
         </p>
       </div>
+      <!-- fix-6: recent geopend (gevuld door js/recent.js) -->
+      <section id="recent-start" class="recent recent-start" aria-labelledby="recent-start-titel" hidden>
+        <div class="recent-kop">
+          <h2 id="recent-start-titel" class="recent-titel">Recent geopend</h2>
+          <button type="button" class="link recent-wis" data-recent-wis>Lijst wissen</button>
+        </div>
+        <ul class="recent-lijst" data-recent-lijst aria-labelledby="recent-start-titel"></ul>
+      </section>
       <button type="button" id="btn-installeer-start" class="knop knop-installeer" hidden>
         <svg class="icon" aria-hidden="true"><use href="#i-install"/></svg>Installeer app
       </button>
@@ -332,7 +346,7 @@
       <h3>Aantekenen</h3>
       <p>A start de tekenmodus. Daarin: V selecteren, P pen, L lijn, O ovaal, R rechthoek, T tekst, K kleur, 1/2/3 lijndikte, Ctrl/Cmd Z ongedaan maken, Ctrl/Cmd Y opnieuw, Delete verwijdert, pijltjes verplaatsen, spatie + slepen schuift, Esc stopt. Op een telefoon teken je met 1 vinger en scroll en zoom je met 2 vingers.</p>
       <h3>Privacy</h3>
-      <p>Je bestand blijft op je eigen toestel. De app onthoudt alleen per document de laatste pagina en zoom, en je aantekeningen (niet de PDF zelf).</p>
+      <p>Je bestand blijft op je eigen toestel. De app onthoudt per document de laatste pagina en zoom en je aantekeningen. Voor "Recent geopend" bewaart de app een kopie van de laatste 6 PDF's, alleen op dit toestel (uit te zetten via ⋮ → Recent geopend).</p>
       <!-- fix-5: uitgebreide pagina's -->
       <p class="help-links">
         <button type="button" class="link" data-info="help.html">Volledige uitleg</button>
@@ -352,6 +366,25 @@
       <h2 id="info-titel" class="info-titel">Help</h2>
     </div>
     <iframe id="info-frame" class="info-frame" title="Informatie" src="about:blank"></iframe>
+  </dialog>
+  <!-- fix-6: recent geopend (ook met een open document, via ⋮-menu) -->
+  <dialog id="dlg-recent" class="dialoog sheet recent-dialoog" aria-labelledby="dlg-recent-titel">
+    <div class="dialoog-kop">
+      <h2 id="dlg-recent-titel">Recent geopend</h2>
+      <button type="button" id="dlg-recent-sluit" class="knop-icoon" data-sluit aria-label="Sluiten"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+    </div>
+    <p id="recent-leeg" class="hulp recent-leeg" hidden></p>
+    <ul class="recent-lijst" data-recent-lijst aria-labelledby="dlg-recent-titel"></ul>
+    <label class="schakelaar" for="recent-aan">
+      <span class="schakelaar-tekst">Recente documenten onthouden</span>
+      <input type="checkbox" id="recent-aan" role="switch" aria-describedby="recent-uitleg" checked>
+      <span class="schakelaar-baan" aria-hidden="true"></span>
+    </label>
+    <p id="recent-uitleg" class="hulp">Een kopie van de laatste 6 PDF's blijft alleen op dit toestel, zodat je ze snel weer opent. Uitzetten wist de lijst.</p>
+    <div class="knoppen">
+      <button type="button" class="knop knop-links" data-recent-wis>Lijst wissen</button>
+      <button type="button" class="knop knop-primair" data-sluit>Sluiten</button>
+    </div>
   </dialog>
   <!-- fix-2: bevestigen -->
   <dialog id="dlg-bevestig" class="dialoog" aria-labelledby="dlg-bev-titel" aria-describedby="dlg-bev-tekst">
