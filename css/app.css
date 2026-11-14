@@ -1,4 +1,5 @@
 /* fix-1 */
+/* fix-2: aantekenen (tekenmodus, gereedschapsbalk, kleurpaneel, tekstvak, selectie, opslaankeuze) */
 /* PdfReader – stijlen. Geen externe fonts, geen inline styles (CSP). */
 
 :root {
@@ -27,6 +28,9 @@
   --success: #1E6B34;
   --overlay: rgba(0, 0, 0, .45);
   --shadow: 0 1px 3px rgba(0, 0, 0, .18), 0 2px 8px rgba(0, 0, 0, .08);
+  --tool-bg: #EEF3FA;
+  --tool-active-bg: rgba(31, 95, 173, .15);
+  --select: #1F5FAD;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -45,6 +49,9 @@
     --success: #8FD3A0;
     --overlay: rgba(0, 0, 0, .6);
     --shadow: 0 1px 3px rgba(0, 0, 0, .6);
+    --tool-bg: #1E2633;
+    --tool-active-bg: rgba(138, 180, 248, .2);
+    --select: #8AB4F8;
   }
 }
 
@@ -427,3 +434,224 @@ body {
   .spinner { border-top-color: var(--accent); }
 }
 .knop-installeer { margin-top: 24px; }
+
+
+/* ================= fix-2: aantekenen ================= */
+
+.kop-teken { display: none; margin: 0; font-size: var(--fs-title); font-weight: 600; }
+
+/* Tekenlaag */
+.annot-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; display: block; }
+.annot-tekst { font-family: Helvetica, Arial, "Liberation Sans", sans-serif; white-space: pre; }
+.annot-item { outline: none; }
+.annot-item.wordt-bewerkt { display: none; }
+.annot-item:focus-visible .annot-vorm, .annot-item:focus-visible .annot-tekst { filter: drop-shadow(0 0 2px var(--select)); }
+.sel-kader { fill: none; stroke: #1F5FAD; stroke-width: 1.5; stroke-dasharray: 5 4; pointer-events: none; }
+.greep { fill: #FFFFFF; stroke: #1F5FAD; stroke-width: 2; }
+.greep-nw, .greep-se { cursor: nwse-resize; }
+.greep-ne, .greep-sw { cursor: nesw-resize; }
+.greep-n, .greep-s { cursor: ns-resize; }
+.greep-e, .greep-w { cursor: ew-resize; }
+.greep-p1, .greep-p2 { cursor: move; }
+.annot-voorbeeld { pointer-events: none; }
+
+/* Tekenmodus: de laag vangt de invoer; tekstselectie uit */
+body.tekenmodus .annotatielaag { pointer-events: auto; touch-action: none; cursor: crosshair; }
+body.tekenmodus .textLayer { pointer-events: none; user-select: none; -webkit-user-select: none; }
+body.tekenmodus .linklaag a { pointer-events: none; }
+body.tekenmodus.tool-select .annotatielaag { cursor: default; }
+body.tekenmodus.tool-select .annot-item { cursor: move; }
+body.tekenmodus.tool-text .annotatielaag { cursor: text; }
+body.tekenmodus.schuiven .annotatielaag { cursor: grab; }
+body.tekenmodus.schuiven-actief .annotatielaag { cursor: grabbing; }
+body.tekenmodus .kop { box-shadow: inset 0 -3px 0 var(--accent); }
+
+/* Gereedschapsbalk */
+.tekenbalk { display: flex; background: var(--tool-bg); }
+.tk-rij { display: flex; align-items: stretch; }
+.tk {
+  font: inherit; color: var(--text); background: transparent; border: 0; border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: var(--tap); min-width: var(--tap); padding: 0 10px;
+  cursor: pointer; touch-action: manipulation; position: relative;
+}
+.tk:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.tk:disabled { opacity: .4; cursor: not-allowed; }
+.tk-label { font-size: var(--fs-label); white-space: nowrap; }
+.tk[aria-checked="true"] { background: var(--tool-active-bg); color: var(--accent); }
+.tk[aria-checked="true"]::after {
+  content: ""; position: absolute; left: 10%; right: 10%; bottom: 0; height: 3px;
+  background: var(--accent); border-radius: 2px;
+}
+.tk-primair { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.tk-primair:hover:not(:disabled) { background: var(--accent-hover); }
+.tk-leeg { flex: 1 1 0; }
+.tk-kort { display: none; }
+@media (max-width: 719.98px) { .tk-kort { display: inline; } }
+
+.kleurstip { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 24px; }
+.kleurstip-rond {
+  display: block; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--kleur, #D32F2F); border: 1px solid rgba(0, 0, 0, .25);
+}
+.kleurstip-dikte { display: block; width: 22px; height: var(--dikte, 3px); max-height: 8px; border-radius: 2px; background: var(--kleur, #D32F2F); }
+.tk-kleur, .tb-kleur, .sel-kleur { --kleur: #D32F2F; }
+.tk-kleur.is-wit .kleurstip-rond, .tk-kleur.is-wit .kleurstip-dikte, .tb-kleur.is-wit .kleurstip-rond { border: 1px solid #C9CDD3; }
+.sel-kleur .kleurstip-rond, .tb-kleur .kleurstip-rond { width: 22px; height: 22px; }
+
+/* Mobiel: twee rijen onderin in plaats van de onderbalk */
+@media (max-width: 719.98px) {
+  body.tekenmodus { --balk-h: 112px; }
+  body.tekenmodus .werkbalk { display: none; }
+  body.tekenmodus #titel { display: none; }
+  body.tekenmodus .kop-teken { display: block; }
+  .tekenbalk {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 11;
+    flex-direction: column;
+    padding: 0 env(safe-area-inset-right) var(--safe-b) env(safe-area-inset-left);
+    border-top: 1px solid var(--border);
+  }
+  .tk-rij { height: 56px; }
+  .tk-rij > * { flex: 1 1 0; min-width: 0; }
+  .tk { flex-direction: column; gap: 2px; padding: 4px 1px; border-radius: 0; min-width: 0; }
+  .tk-label { font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .tk-lang { display: none; }
+  .tk-acties { border-top: 1px solid var(--border); }
+  .tk-primair { border-radius: 10px; margin: 4px; }
+  .selectiebalk .sel-kleur { display: none; }
+}
+
+/* Desktop: gereedschapsgroep rechts in de bovenbalk */
+@media (min-width: 720px) {
+  .tekenbalk { align-items: center; gap: 2px; background: transparent; flex: none; }
+  .tk-rij { gap: 2px; align-items: center; }
+  .tk-gereedschap { padding-right: 6px; border-right: 1px solid var(--border); margin-right: 6px; }
+  .tk-acties { gap: 2px; }
+  .tk-acties .tk-actie .tk-label { display: none; }
+  .tk-leeg { display: none; }
+  .tk-kleur { margin-right: 6px; }
+  .tk-primair { margin-left: 8px; padding: 0 16px; }
+  .tk { min-height: 44px; font-size: 15px; }
+  .tk-label { font-size: 15px; }
+  body.tekenmodus .werkbalk { flex: 1 1 auto; min-width: 0; }
+  body.tekenmodus .werkbalk .tb-label { display: none; }
+  body.tekenmodus .werkbalk .tb { min-width: 44px; padding: 0 8px; }
+  body.tekenmodus .kop-titel { max-width: 16vw; }
+  body.tekenmodus #btn-aantekenen, body.tekenmodus #btn-opslaan, body.tekenmodus #btn-installeer { display: none; }
+  body.tekenmodus .kop { overflow: hidden; }
+  body.tekenmodus .tekenbalk { order: 5; }
+}
+/* Labels passen (naast titel, zoomgroep en teller) pas vanaf ca. 1440px; daaronder alleen-icoon met tooltip. */
+@media (min-width: 720px) and (max-width: 1439.98px) {
+  .tk-gereedschap .tk-label, .tk-kleur .tk-label { display: none; }
+  .tk-gereedschap .tk { padding: 0 8px; }
+}
+@media (min-width: 720px) and (max-width: 899.98px) {
+  body.tekenmodus #btn-breedte, body.tekenmodus .kop-titel .titel { display: none; }
+}
+
+/* Hint */
+.tekenhint {
+  position: fixed; left: 50%; transform: translateX(-50%); z-index: 25;
+  top: calc(var(--kop-h) + 10px); max-width: min(92vw, 520px);
+  padding: 10px 16px; border-radius: var(--radius);
+  background: var(--text); color: var(--bg); font-size: 15px; text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .25); pointer-events: none;
+}
+
+/* Kleur- en diktepaneel */
+.kleurpaneel {
+  position: fixed; z-index: 35; width: 300px; max-width: calc(100vw - 16px);
+  padding: 12px 16px 14px; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, .22);
+}
+.kleurpaneel.sheet {
+  left: 0; right: 0; width: auto; max-width: none; border-radius: 16px 16px 0 0;
+  bottom: calc(112px + var(--safe-b)); max-height: 70vh; overflow-y: auto;
+}
+.paneel-kop { display: flex; align-items: center; justify-content: space-between; }
+.paneel-kop h2 { margin: 0; font-size: 18px; }
+.kleurpaneel h3 { margin: 10px 0 6px; font-size: 15px; color: var(--text-muted); font-weight: 600; }
+.stalen { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 12px; }
+.staal {
+  font: inherit; color: var(--text); background: transparent; border: 0; padding: 2px 0; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: var(--tap); border-radius: 10px;
+}
+.staal .staal-rond {
+  position: relative; display: block; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--kleur); border: 1px solid rgba(0, 0, 0, .2);
+}
+.staal .staal-rond.is-wit { border-color: #C9CDD3; }
+.staal[aria-checked="true"] .staal-rond { box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px var(--text); }
+.staal[aria-checked="true"] .staal-rond::after {
+  content: ""; position: absolute; left: 14px; top: 9px; width: 9px; height: 16px;
+  border: solid #FFFFFF; border-width: 0 3px 3px 0; transform: rotate(45deg);
+}
+.staal[aria-checked="true"] .staal-rond.licht::after { border-color: #1C1E21; }
+.optie-label { font-size: 13px; }
+.staal-klein { min-height: 44px; }
+.staal-klein .staal-rond { width: 32px; height: 32px; }
+.staal-klein[aria-checked="true"] .staal-rond::after { left: 10px; top: 5px; }
+.eigen-rij { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+.eigen-label { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap); cursor: pointer; font-size: 15px; }
+.eigen-label input[type="color"] { width: 44px; height: 36px; padding: 0; border: 1px solid var(--border); border-radius: 8px; background: transparent; cursor: pointer; }
+.eigen-recent { display: flex; gap: 6px; }
+.opties { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.dikte-optie, .grootte-optie {
+  font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+  min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer;
+}
+.dikte-optie[aria-checked="true"], .grootte-optie[aria-checked="true"] {
+  border: 2px solid var(--accent); background: var(--tool-active-bg); color: var(--accent);
+}
+.dikte-voorbeeld { display: block; width: 40px; height: var(--dikte); border-radius: 4px; background: var(--kleur, var(--text)); }
+.grootte-voorbeeld { font-size: var(--grootte); line-height: 1; font-weight: 600; }
+.wis-rij { display: flex; justify-content: space-between; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.wis-rij .link { color: var(--danger); font-size: 15px; }
+
+/* Selectiebalk (zwevend boven het geselecteerde item) */
+.selectiebalk {
+  position: fixed; z-index: 20; display: flex; gap: 6px; align-items: center;
+  padding: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
+}
+.selectiebalk.verborgen { visibility: hidden; }
+.selectiebalk .knop { min-height: var(--tap); border: 0; }
+
+/* Tekstvak */
+.annot-invoer {
+  position: absolute; z-index: 5; margin: 0; resize: none; overflow: hidden;
+  left: calc(var(--x) * 1%); top: calc(var(--y) * 1%);
+  width: calc(var(--total-scale-factor) * var(--w) * 1px);
+  height: calc(var(--total-scale-factor) * var(--fs) * 1.35 * var(--regels) * 1px + 6px);
+  padding: 0 0 0 calc(var(--total-scale-factor) * 1px);
+  font: calc(var(--total-scale-factor) * var(--fs) * 1px) / 1.35 Helvetica, Arial, "Liberation Sans", sans-serif;
+  color: var(--kleur); caret-color: var(--kleur); background: transparent;
+  border: 0; outline: 2px dashed var(--accent); outline-offset: 2px; border-radius: 2px;
+  white-space: pre-wrap; overflow-wrap: anywhere; touch-action: manipulation;
+  color-scheme: only light;
+}
+.annot-invoer::placeholder { color: #8A9099; opacity: 1; }
+.annot-invoer.is-wit { background: rgba(0, 0, 0, .35); }
+
+/* Tekst-minibalk: boven het toetsenbord (mobiel), onderaan (desktop) */
+.tekstbalk {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  display: flex; gap: 8px; align-items: center; justify-content: flex-end;
+  min-height: 56px; padding: 4px max(8px, env(safe-area-inset-right)) 4px max(8px, env(safe-area-inset-left));
+  background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -2px 8px rgba(0, 0, 0, .08);
+}
+.tekstbalk .tb-kleur { margin-right: auto; }
+.grootte-a { font-weight: 700; font-size: 18px; }
+@media (min-width: 720px) {
+  .tekstbalk { left: 50%; right: auto; transform: translateX(-50%); bottom: 16px !important; border: 1px solid var(--border); border-radius: 14px; }
+}
+
+/* Opslaan: keuze met/zonder aantekeningen */
+.keuze { border: 1px solid var(--border); border-radius: var(--radius); margin: 4px 0 8px; padding: 6px 12px 8px; }
+.keuze legend { font-weight: 600; padding: 0 4px; }
+.dialoog .keuze-optie { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 400; margin: 0; cursor: pointer; }
+.keuze-optie input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; margin: 0; }
+.keuze-vinkje { padding-left: 30px; font-size: 15px; }
+.dialoog .info { display: flex; gap: 8px; align-items: flex-start; margin: 6px 0 0; font-size: 15px; color: var(--text-muted); }
+.dialoog .info .icon { margin-top: 2px; color: var(--accent); }
