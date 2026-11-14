@@ -1,4 +1,5 @@
 // fix-1
+// fix-5: zoom vanaf 25% geldig (zie viewer.js).
 // Voorkeuren in localStorage. Alleen fingerprint, pagina en zoom; nooit inhoud of paden.
 // Alle toegang in try/catch (bijv. privémodus of uitgeschakelde opslag).
 
@@ -27,7 +28,7 @@ function write(key, value) {
 /** Zoom is 'width', 'page', 'auto' of een getal (1 = 100%). */
 export function isValidZoom(z) {
   return z === 'width' || z === 'page' || z === 'auto' ||
-    (typeof z === 'number' && Number.isFinite(z) && z >= 0.5 && z <= 4);
+    (typeof z === 'number' && Number.isFinite(z) && z >= 0.25 && z <= 4);
 }
 
 export function getZoomPref() {

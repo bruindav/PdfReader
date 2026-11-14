@@ -1,5 +1,6 @@
 // fix-3
 // fix-4: versionCode/versionName verhoogd (fix-4 = 4000 + runnummer)
+// fix-5: versionCode/versionName verhoogd (fix-5 = 5000 + runnummer)
 import java.io.File
 
 plugins {
@@ -28,8 +29,8 @@ android {
         applicationId = "io.github.bruindav.pdfreader"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4000 + runNumber // altijd hoger dan de fix-3-builds (alleen runnummer)
-        versionName = "fix-4.$runNumber"
+        versionCode = 5000 + runNumber // altijd hoger dan de fix-4-builds (4000 + runnummer)
+        versionName = "fix-5.$runNumber"
     }
 
     signingConfigs {

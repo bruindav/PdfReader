@@ -1,0 +1,115 @@
+/* fix-5: help.html, privacy.html en disclaimer.html. Gebruikt de kleuren en maten van app.css (licht/donker). */
+
+body.infopagina {
+  display: block;
+  height: auto;
+  min-height: 100%;
+  overflow: auto;
+  padding: 0;
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+html:has(body.infopagina) { height: auto; }
+
+.info-paginakop {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; gap: 8px;
+  min-height: 56px;
+  padding: 4px max(12px, env(safe-area-inset-right)) 4px max(12px, env(safe-area-inset-left));
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.info-paginakop a {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 6px;
+  color: var(--text); text-decoration: none; font-weight: 600; font-size: 18px; border-radius: var(--radius);
+}
+.info-paginakop .logo { color: var(--accent); }
+.info-paginakop .terug { margin-left: auto; color: var(--accent); font-weight: 600; font-size: 16px; }
+
+.info-tabs {
+  display: flex; gap: 4px; flex-wrap: wrap;
+  max-width: 760px; margin: 0 auto; padding: 12px 16px 0;
+}
+.info-tabs a {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px;
+  border: 1px solid var(--border); border-radius: 999px;
+  color: var(--text); text-decoration: none; font-size: 15px; background: var(--surface);
+}
+.info-tabs a[aria-current="page"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+
+.info-inhoud {
+  max-width: 760px; margin: 0 auto;
+  padding: 8px 16px calc(40px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  line-height: 1.55;
+}
+.info-inhoud h1 { font-size: 26px; line-height: 1.25; margin: 16px 0 4px; }
+.info-inhoud h2 {
+  font-size: 21px; line-height: 1.3; margin: 32px 0 8px; padding-top: 12px;
+  border-top: 1px solid var(--border); scroll-margin-top: 72px;
+}
+.ingebed .info-inhoud h2 { scroll-margin-top: 12px; }
+.info-inhoud h3 { font-size: 17px; margin: 20px 0 4px; }
+.info-inhoud p, .info-inhoud ul, .info-inhoud ol { margin: 0 0 12px; }
+.info-inhoud ul, .info-inhoud ol { padding-left: 1.4em; }
+.info-inhoud li { margin-bottom: 6px; }
+.info-inhoud a { color: var(--accent); text-underline-offset: 3px; overflow-wrap: anywhere; }
+.info-inhoud strong { font-weight: 650; }
+.bijgewerkt { color: var(--text-muted); font-size: 15px; margin-top: 0; }
+.intro { font-size: 18px; }
+
+.inhoudsopgave {
+  margin: 16px 0 8px; padding: 12px 16px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.inhoudsopgave h2 { border: 0; margin: 0 0 6px; padding: 0; font-size: 16px; color: var(--text-muted); }
+.inhoudsopgave ol { margin: 0; }
+.inhoudsopgave a { display: inline-block; padding: 4px 0; }
+
+.kader {
+  margin: 12px 0 16px; padding: 12px 14px;
+  background: var(--tool-bg); border-left: 4px solid var(--accent); border-radius: 6px;
+}
+.kader.let-op { border-left-color: var(--danger); }
+.kader p:last-child, .kader ul:last-child { margin-bottom: 0; }
+
+.knopnaam {
+  display: inline-block; padding: 0 6px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface); font-size: .92em; font-weight: 600; white-space: nowrap;
+}
+kbd {
+  font: inherit; font-size: .88em; padding: 0 5px; border: 1px solid var(--border);
+  border-bottom-width: 2px; border-radius: 5px; background: var(--surface); white-space: nowrap;
+}
+
+.info-inhoud details {
+  margin: 0 0 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+}
+.info-inhoud summary {
+  cursor: pointer; padding: 12px 14px; min-height: 48px; font-weight: 600; list-style-position: outside;
+  margin-left: 18px;
+}
+.info-inhoud details > :not(summary) { margin-left: 14px; margin-right: 14px; }
+.info-inhoud details[open] > :last-child { margin-bottom: 14px; }
+
+.gereedschap { display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; margin: 8px 0 12px; }
+.gereedschap dt { font-weight: 650; }
+.gereedschap dd { margin: 0; }
+
+.info-voet {
+  max-width: 760px; margin: 0 auto; padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border); color: var(--text-muted); font-size: 15px;
+}
+.info-voet a { color: var(--accent); }
+
+#wis-gegevens { margin: 4px 0 8px; }
+.wis-status { color: var(--success); font-weight: 600; min-height: 1.5em; }
+
+/* Ingebed in het info-venster van de app: daar staat de kopregel al. */
+.ingebed .info-paginakop, .ingebed .alleen-los { display: none !important; }
+html:not(.ingebed) .alleen-ingebed { display: none !important; }
+
+@media (min-width: 720px) {
+  .info-inhoud h1 { font-size: 30px; }
+}
