@@ -1,0 +1,245 @@
+<!doctype html>
+<!-- fix-1 -->
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; font-src 'self' data:; connect-src 'self' blob: data:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>PdfReader</title>
+  <meta name="description" content="Rustige, reclamevrije PDF-lezer. Je bestand blijft op je eigen toestel.">
+  <meta name="theme-color" content="#1F5FAD" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#22252B" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="PdfReader">
+  <meta name="application-name" content="PdfReader">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" sizes="180x180">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="modulepreload" href="vendor/pdfjs/pdf.min.mjs">
+  <script type="module" src="js/app.js"></script>
+  <script nomodule src="js/nomodule.js"></script>
+</head>
+<body>
+  <!-- Pictogrammen (lijnstijl 2px, kleur volgt de tekst) -->
+  <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-open" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 16v-6M9.5 12.5 12 10l2.5 2.5"/></symbol>
+    <symbol id="i-min" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5M7.5 10.5h6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5M7.5 10.5h6M10.5 7.5v6"/></symbol>
+    <symbol id="i-width" viewBox="0 0 24 24"><path d="M3 5v14M21 5v14M7 12h10M9.5 9.5 7 12l2.5 2.5M14.5 9.5 17 12l-2.5 2.5"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M12 4v10M8 10l4 4 4-4"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17v.5"/></symbol>
+    <symbol id="i-install" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 7v7M9 11l3 3 3-3"/></symbol>
+    <symbol id="i-logo" viewBox="0 0 24 24"><path d="M7 3h7l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M14 3v4h4"/><circle cx="12.5" cy="14" r="3"/><path d="m14.7 16.2 2.3 2.3"/></symbol>
+  </svg>
+
+  <noscript><p class="noscript">PdfReader heeft JavaScript nodig. Zet JavaScript aan of gebruik een recente browser.</p></noscript>
+
+  <header class="kop">
+    <div class="kop-titel">
+      <svg class="icon logo" aria-hidden="true"><use href="#i-logo"/></svg>
+      <h1 id="titel" class="titel">PdfReader</h1>
+    </div>
+    <button type="button" id="teller-kop" class="teller teller-kop" disabled aria-disabled="true" aria-label="Ga naar pagina" aria-keyshortcuts="Control+G">– / –</button>
+
+    <div id="werkbalk" class="werkbalk" role="toolbar" aria-label="Werkbalk">
+      <button type="button" id="btn-open" class="tb" aria-label="PDF openen" aria-keyshortcuts="Control+O">
+        <svg class="icon" aria-hidden="true"><use href="#i-open"/></svg><span class="tb-label">Openen</span>
+      </button>
+      <div class="zoomgroep">
+        <button type="button" id="btn-kleiner" class="tb" aria-label="Verkleinen" aria-keyshortcuts="Control+Minus" disabled aria-disabled="true">
+          <svg class="icon" aria-hidden="true"><use href="#i-min"/></svg><span class="tb-label">Kleiner</span>
+        </button>
+        <button type="button" id="btn-zoom" class="tb tb-waarde" aria-haspopup="menu" aria-expanded="false" aria-controls="zoommenu" aria-label="Zoom 100 procent. Kies passend op breedte" disabled aria-disabled="true">
+          <span id="zoom-waarde" class="tb-waarde-tekst">100%</span>
+        </button>
+        <button type="button" id="btn-groter" class="tb" aria-label="Vergroten" aria-keyshortcuts="Control+Plus" disabled aria-disabled="true">
+          <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span class="tb-label">Groter</span>
+        </button>
+        <button type="button" id="btn-breedte" class="tb alleen-desktop" aria-label="Passend op breedte" aria-keyshortcuts="Control+0" disabled aria-disabled="true">
+          <svg class="icon" aria-hidden="true"><use href="#i-width"/></svg><span class="tb-label">Breedte</span>
+        </button>
+      </div>
+      <button type="button" id="teller-balk" class="tb tb-waarde teller alleen-desktop" disabled aria-disabled="true" aria-label="Ga naar pagina" aria-keyshortcuts="Control+G">– / –</button>
+      <!-- Ruimte voor latere functies (fase 2) -->
+      <div class="toolbar-slot" data-later="aantekening markeren"></div>
+      <button type="button" id="btn-installeer" class="tb alleen-desktop" hidden>
+        <svg class="icon" aria-hidden="true"><use href="#i-install"/></svg><span class="tb-label">Installeer app</span>
+      </button>
+      <button type="button" id="btn-opslaan" class="tb tb-primair" aria-label="PDF opslaan" aria-keyshortcuts="Control+S" disabled aria-disabled="true">
+        <svg class="icon" aria-hidden="true"><use href="#i-save"/></svg><span class="tb-label">Opslaan</span>
+      </button>
+    </div>
+
+    <div id="zoommenu" class="popover" role="menu" aria-label="Zoom kiezen" hidden>
+      <button type="button" role="menuitem" data-zoom="width">Passend op breedte</button>
+      <button type="button" role="menuitem" data-zoom="page">Hele pagina</button>
+      <button type="button" role="menuitem" data-zoom="1">100%</button>
+      <button type="button" role="menuitem" data-zoom="1.5">150%</button>
+      <button type="button" role="menuitem" data-zoom="2">200%</button>
+    </div>
+  </header>
+
+  <main id="lezer" class="lezer" tabindex="0" aria-label="Document">
+    <!-- Startscherm -->
+    <section id="start" class="staat start" aria-labelledby="start-tekst">
+      <div class="dropvak">
+        <img class="start-icoon" src="icons/icon.svg" alt="" width="96" height="96">
+        <p id="start-tekst" class="start-tekst">
+          <span class="alleen-mobiel">Open een PDF om te beginnen.</span>
+          <span class="alleen-desktop">Sleep een PDF hierheen<br><span class="of">of</span></span>
+        </p>
+        <button type="button" id="btn-open-groot" class="knop knop-primair knop-groot">
+          <svg class="icon" aria-hidden="true"><use href="#i-open"/></svg>PDF openen
+        </button>
+        <p class="privacy">
+          <span class="alleen-mobiel">Je bestand blijft op je eigen toestel.</span>
+          <span class="alleen-desktop">Je bestand blijft op je eigen computer.</span>
+        </p>
+      </div>
+      <button type="button" id="btn-installeer-start" class="knop knop-installeer" hidden>
+        <svg class="icon" aria-hidden="true"><use href="#i-install"/></svg>Installeer app
+      </button>
+      <p class="start-links">
+        <button type="button" id="link-installeer" class="link">
+          <svg class="icon icon-klein" aria-hidden="true"><use href="#i-info"/></svg><span class="alleen-mobiel">Zet op beginscherm</span><span class="alleen-desktop">Installeren als app</span>
+        </button>
+        <button type="button" id="link-help" class="link">Help</button>
+      </p>
+    </section>
+
+    <!-- Laden -->
+    <section id="laden" class="staat laden" hidden aria-live="polite">
+      <div id="spinner-vak" class="spinner-vak verborgen">
+        <div class="spinner" aria-hidden="true"></div>
+        <p>PDF wordt geopend…</p>
+        <progress id="voortgang" class="voortgang" max="100" hidden></progress>
+      </div>
+    </section>
+
+    <!-- Foutmelding -->
+    <section id="fout" class="staat fout" hidden role="alert" aria-labelledby="fout-titel">
+      <svg class="icon icon-groot" aria-hidden="true"><use href="#i-warn"/></svg>
+      <h2 id="fout-titel" class="fout-titel">Dit bestand kan niet worden geopend.</h2>
+      <p id="fout-oorzaak" class="fout-oorzaak"></p>
+      <button type="button" id="btn-open-fout" class="knop knop-primair knop-groot">Ander bestand openen</button>
+    </section>
+
+    <!-- Pagina's -->
+    <div id="paginas" class="paginas" hidden></div>
+  </main>
+
+  <div id="dropoverlay" class="dropoverlay" hidden aria-hidden="true"><p>Laat los om te openen</p></div>
+
+  <div id="installbanner" class="banner" hidden>
+    <p>Zet PdfReader op je beginscherm</p>
+    <button type="button" id="banner-meer" class="knop">Hoe?</button>
+    <button type="button" id="banner-sluit" class="knop-icoon" aria-label="Sluiten"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+  </div>
+
+  <div id="toasts" class="toasts"></div>
+  <div id="melding" class="visually-hidden" aria-live="polite"></div>
+
+  <input type="file" id="bestand" class="visually-hidden" accept="application/pdf,.pdf" tabindex="-1" aria-hidden="true">
+
+  <!-- Dialoog: ga naar pagina -->
+  <dialog id="dlg-pagina" class="dialoog" aria-labelledby="dlg-pagina-titel">
+    <form method="dialog" id="form-pagina" novalidate>
+      <h2 id="dlg-pagina-titel">Ga naar pagina</h2>
+      <label for="pagina-invoer" id="pagina-label">Paginanummer</label>
+      <input id="pagina-invoer" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-describedby="pagina-fout">
+      <p id="pagina-fout" class="veldfout" aria-live="polite"></p>
+      <div class="knoppen">
+        <button type="button" class="knop" data-sluit>Annuleren</button>
+        <button type="submit" class="knop knop-primair">Ga</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Dialoog: opslaan -->
+  <dialog id="dlg-opslaan" class="dialoog sheet" aria-labelledby="dlg-opslaan-titel">
+    <form method="dialog" id="form-opslaan" novalidate>
+      <div class="dialoog-kop">
+        <h2 id="dlg-opslaan-titel">PDF opslaan</h2>
+        <button type="button" class="knop-icoon" data-sluit aria-label="Sluiten"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+      </div>
+      <label for="naam-invoer">Bestandsnaam</label>
+      <div class="naamveld">
+        <input id="naam-invoer" type="text" autocomplete="off" spellcheck="false" aria-describedby="naam-fout opslaan-hulp">
+        <span class="suffix" aria-hidden="true">.pdf</span>
+      </div>
+      <p id="naam-fout" class="veldfout" aria-live="polite"></p>
+      <p id="opslaan-hulp" class="hulp"></p>
+      <div class="knoppen">
+        <button type="button" id="btn-delen" class="knop knop-links" hidden>Delen…</button>
+        <button type="button" class="knop" data-sluit>Annuleren</button>
+        <button type="submit" class="knop knop-primair">Opslaan</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Dialoog: wachtwoord -->
+  <dialog id="dlg-wachtwoord" class="dialoog" aria-labelledby="dlg-ww-titel" aria-describedby="dlg-ww-tekst">
+    <form method="dialog" id="form-wachtwoord" novalidate>
+      <h2 id="dlg-ww-titel"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg> Deze PDF is beveiligd</h2>
+      <p id="dlg-ww-tekst">Vul het wachtwoord in om het bestand te openen.</p>
+      <label for="ww-invoer">Wachtwoord</label>
+      <div class="wwveld">
+        <input id="ww-invoer" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="ww-fout">
+        <button type="button" id="ww-toon" class="knop" aria-pressed="false">Toon</button>
+      </div>
+      <p id="ww-fout" class="veldfout" aria-live="assertive"></p>
+      <div class="knoppen">
+        <button type="button" class="knop" data-sluit>Annuleren</button>
+        <button type="submit" class="knop knop-primair">Openen</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Dialoog: installeren / help -->
+  <dialog id="dlg-installeer" class="dialoog" aria-labelledby="dlg-inst-titel">
+    <form method="dialog">
+      <div class="dialoog-kop">
+        <h2 id="dlg-inst-titel">Zet PdfReader op je beginscherm</h2>
+        <button type="button" class="knop-icoon" data-sluit aria-label="Sluiten"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+      </div>
+      <div id="inst-inhoud" class="inst-inhoud"></div>
+      <div class="knoppen" id="inst-knoppen">
+        <button type="button" id="inst-nietnu" class="knop" data-sluit hidden>Niet nu</button>
+        <button type="button" id="inst-prompt" class="knop knop-primair" hidden>Installeren</button>
+        <button type="button" id="inst-begrepen" class="knop knop-primair" data-sluit>Begrepen</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-help" class="dialoog" aria-labelledby="dlg-help-titel">
+    <form method="dialog">
+      <div class="dialoog-kop">
+        <h2 id="dlg-help-titel">Help</h2>
+        <button type="button" class="knop-icoon" data-sluit aria-label="Sluiten"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+      </div>
+      <h3>PDF uit een andere app openen</h3>
+      <p id="help-delen"></p>
+      <ol id="help-ios" class="help-stappen" hidden>
+        <li>Kies in de andere app (bijvoorbeeld je bank-app) "Bewaar in Bestanden".</li>
+        <li>Open PdfReader en kies "PDF openen". De Bestanden-app toont je recente bestanden bovenaan.</li>
+      </ol>
+      <h3>Sneltoetsen</h3>
+      <p>Ctrl/Cmd + en − zoomen, Ctrl/Cmd 0 past op breedte, Ctrl/Cmd G gaat naar een pagina, Ctrl/Cmd S slaat op.</p>
+      <h3>Privacy</h3>
+      <p>Je bestand blijft op je eigen toestel. De app onthoudt alleen per document de laatste pagina en zoom (geen inhoud).</p>
+      <div class="knoppen">
+        <button type="button" id="btn-wis" class="knop knop-links">Geschiedenis wissen</button>
+        <button type="button" class="knop knop-primair" data-sluit>Sluiten</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

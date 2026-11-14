@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- fix-1 -->
+  <!-- PdfReader-icoon (favicon): vel papier met vergrootglas -->
+  <defs><clipPath id="lens"><circle cx="300" cy="324" r="54"/></clipPath></defs>
+  <rect width="512" height="512" rx="112" fill="#1F5FAD"/>
+  <g transform="translate(256 256) scale(1.14) translate(-256 -256)">
+    <path d="M168 96H300L372 168V396A20 20 0 0 1 352 416H168A20 20 0 0 1 148 396V116A20 20 0 0 1 168 96Z" fill="#FFFFFF"/>
+    <path d="M300 96V148A20 20 0 0 0 320 168H372Z" fill="#C9D8EE"/>
+    <g stroke="#9DB3D3" stroke-width="14" stroke-linecap="round" fill="none">
+      <line x1="184" y1="200" x2="296" y2="200"/>
+      <line x1="184" y1="236" x2="336" y2="236"/>
+      <line x1="184" y1="272" x2="244" y2="272"/>
+    </g>
+    <circle cx="300" cy="324" r="64" fill="#EAF1FB"/>
+    <g clip-path="url(#lens)" stroke="#1F5FAD" stroke-width="22" stroke-linecap="round">
+      <line x1="262" y1="310" x2="372" y2="310"/>
+      <line x1="262" y1="350" x2="318" y2="350"/>
+    </g>
+    <circle cx="300" cy="324" r="64" fill="none" stroke="#1C1E21" stroke-width="20"/>
+    <line x1="347" y1="371" x2="398" y2="422" stroke="#1C1E21" stroke-width="28" stroke-linecap="round"/>
+  </g>
+</svg>
