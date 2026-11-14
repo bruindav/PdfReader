@@ -1,6 +1,7 @@
 <!-- fix-1 -->
 <!-- fix-2 -->
 <!-- fix-3 -->
+<!-- fix-5 -->
 # PdfReader
 
 Een rustige, reclamevrije PDF-lezer die in de browser draait: **https://bruindav.github.io/PdfReader/**
@@ -12,6 +13,7 @@ Een rustige, reclamevrije PDF-lezer die in de browser draait: **https://bruindav
 - Wachtwoordbeveiligde PDF's, ga naar pagina, onthoudt per document de laatste pagina en zoom (alleen een vingerafdruk, geen inhoud).
 - Werkt offline na het eerste bezoek.
 - **Aantekenen** (fix-2): pen, lijn, ovaal, rechthoek en tekst, in 8 vaste kleuren of een eigen kleur, 3 lijndiktes en 3 tekstgroottes. Selecteren, verplaatsen, formaat wijzigen, verwijderen, ongedaan maken/opnieuw. Op de telefoon teken je met 1 vinger en scroll/zoom je met 2 vingers.
+- **Help, Privacy en Disclaimer** (fix-5): [help.html](https://bruindav.github.io/PdfReader/help.html), [privacy.html](https://bruindav.github.io/PdfReader/privacy.html) en [disclaimer.html](https://bruindav.github.io/PdfReader/disclaimer.html). In de app bereikbaar via het ⋮-menu rechtsboven (Help / Privacy / Disclaimer / Over) en via Help op het startscherm. Ze openen in een venster boven de app, zodat een open PDF open blijft; de terugknop (ook in de Android-app) sluit het venster. Werken offline.
 - Aantekeningen worden automatisch op je toestel bewaard (per document, in IndexedDB; geen PDF-inhoud) en komen terug als je dezelfde PDF opnieuw opent.
 - Opslaan **met aantekeningen** (echte PDF-annotaties, zichtbaar in elke PDF-app, optioneel vastgezet in de pagina) of het **origineel** (byte-voor-byte ongewijzigd). Werkt ook bij beveiligde PDF's zoals bankafschriften.
 
@@ -107,6 +109,13 @@ Modules: `js/annotations.js` (tekenmodus, invoer, selectie, tekst), `js/annot-mo
    - Overwogen en afgewezen: ontsleutelen met een WebAssembly-tool (qpdf-wasm; zou `'wasm-unsafe-eval'` in de CSP vereisen en levert een onbeveiligde kopie) en pagina's als afbeelding opnieuw opbouwen (tekst niet meer selecteerbaar).
 
 Na het maken wordt het resultaat altijd met pdf.js opnieuw geopend ter controle; mislukt dat, dan volgt een melding met de knop "Origineel opslaan".
+
+### Schermindeling op telefoons (fix-5)
+
+- De onderbalk is een grid met 6 gelijke kolommen (`minmax(0, 1fr)`): Openen, Kleiner, zoom-%, Groter, Teken, Opslaan. Labels staan op één regel, lettergrootte met `clamp()`, en als laatste vangnet `text-overflow: ellipsis` – knoppen kunnen dus nooit meer over elkaar heen lopen. "Aantekenen" heet op de telefoon zichtbaar "Teken" (de schermlezer zegt nog steeds "Aantekenen"). Hetzelfde geldt voor de tekenbalk (2 rijen).
+- De balken hebben `text-size-adjust: 100%`; in de Android-app is de WebView-tekstvergroting (`textZoom`, volgt de lettergrootte van Android) begrensd op 115%. Grote lettergroottes braken anders de vaste knopmaten. Het document zelf maak je groter met zoomen.
+- Zoom kan nu tot 25% (was 50%): op een smal scherm (360 px, bijv. Samsung met grotere schermzoom) past een A4 pas onder 50%; bij 50% viel de pagina rechts buiten beeld en was Kleiner uitgeschakeld. Groter/Kleiner stoppen onderweg bij "passend op breedte".
+- Liggend (720–1100 px breed) in de tekenmodus worden paginateller, logo en Groter/Kleiner verborgen zodat alles naast elkaar past.
 
 Lokaal testen: `python3 -m http.server` in deze map en open http://localhost:8000/.
 Bij een nieuwe release: verhoog `VERSION` in `sw.js`.

@@ -1,0 +1,84 @@
+<!doctype html>
+<!-- fix-5 -->
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Privacy – PdfReader</title>
+  <meta name="description" content="Privacyverklaring van PdfReader: alles blijft op je eigen toestel.">
+  <meta name="theme-color" content="#1F5FAD" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#22252B" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/info.css">
+  <script type="module" src="js/infopagina.js"></script>
+</head>
+<body class="infopagina">
+  <header class="info-paginakop">
+    <a href="./"><img class="logo" src="icons/favicon.svg" alt="" width="28" height="28">PdfReader</a>
+    <a class="terug" href="./">Naar de app</a>
+  </header>
+  <nav class="info-tabs" aria-label="Informatie">
+    <a href="help.html">Help</a>
+    <a href="privacy.html" aria-current="page">Privacy</a>
+    <a href="disclaimer.html">Disclaimer</a>
+  </nav>
+  <main class="info-inhoud" id="inhoud">
+    <h1>Privacy</h1>
+    <p class="bijgewerkt">Laatst bijgewerkt: 14 november 2026</p>
+    <div class="kader">
+      <p class="intro"><strong>Kort gezegd:</strong> alles gebeurt op je eigen toestel. Je PDF's en aantekeningen worden nergens naartoe gestuurd.</p>
+    </div>
+
+    <h2 id="lokaal">Alles blijft op je toestel</h2>
+    <ul>
+      <li>PdfReader opent je PDF <strong>in je eigen browser of in de app</strong> op je toestel. Het bestand wordt <strong>niet geüpload</strong>, ook niet tijdelijk.</li>
+      <li>Je hebt <strong>geen account</strong> nodig en we vragen geen naam, e-mailadres of andere gegevens.</li>
+      <li>Er is <strong>geen tracking</strong>: geen cookies, geen analytics of statistieken, geen advertenties en geen code van advertentie- of meetbedrijven.</li>
+      <li>Wachtwoorden van beveiligde PDF's gebruikt PdfReader alleen zolang het document open is. Ze worden niet bewaard.</li>
+    </ul>
+
+    <h2 id="bewaard">Wat PdfReader op je toestel bewaart</h2>
+    <p>Om de app prettig te laten werken, bewaart PdfReader een paar dingen <em>alleen op je eigen toestel</em>:</p>
+    <ul>
+      <li><strong>Je aantekeningen</strong> (in de browser-opslag IndexedDB), gekoppeld aan een kenmerk van het document. De PDF zelf wordt niet bewaard.</li>
+      <li><strong>Voorkeuren</strong> (in localStorage): per document de laatste pagina en zoom, je zoomvoorkeur, de laatst gekozen kleur en dikte, en of je een uitleg al hebt gezien. Geen bestandsnamen of mappen.</li>
+      <li><strong>De app zelf</strong> (in de cache van de browser), zodat PdfReader ook zonder internet werkt.</li>
+    </ul>
+    <p>Niemand anders kan hierbij, ook de maker van PdfReader niet.</p>
+
+    <h2 id="wissen">Gegevens wissen</h2>
+    <p class="alleen-ingebed">Met deze knop wis je de geschiedenis (laatste pagina en zoom per document). Heb je aantekeningen bewaard, dan vraagt PdfReader eerst of die ook weg mogen.</p>
+    <p><button type="button" id="wis-gegevens" class="knop" hidden>Geschiedenis en aantekeningen wissen</button></p>
+    <p id="wis-status" class="wis-status alleen-ingebed" role="status"></p>
+    <p class="alleen-los">In PdfReader vind je de knop <strong>Gegevens wissen</strong> via het menu <strong>⋮ → Privacy</strong>, of bij <strong>Help → Geschiedenis wissen</strong> op het startscherm.</p>
+    <p>Alles in één keer weg, inclusief de app-cache:</p>
+    <ul>
+      <li><strong>Android-app:</strong> Instellingen → Apps → PdfReader → Opslag → <em>Gegevens wissen</em>. Of verwijder de app.</li>
+      <li><strong>Browser:</strong> wis de sitegegevens van <em>bruindav.github.io</em> in de instellingen van je browser, of verwijder de geïnstalleerde web-app.</li>
+    </ul>
+    <p>Let op: gewiste aantekeningen kun je niet terughalen. Sla belangrijke aantekeningen eerst op in de PDF.</p>
+
+    <h2 id="hosting">Hosting via GitHub Pages</h2>
+    <p>De bestanden van de app (zoals deze pagina) worden geleverd door <strong>GitHub Pages</strong>. Bij het laden van de app kan GitHub technische gegevens vastleggen in serverlogs, zoals je IP-adres en het type browser. Dat is nodig om de website te leveren en te beveiligen. Je PDF's gaan hier nooit mee. Lees de <a href="https://docs.github.com/nl/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">privacyverklaring van GitHub</a> voor meer informatie.</p>
+    <p>Klik je op een link naar een andere website (zoals GitHub of de DigiDave Store), dan gelden de regels van die website.</p>
+
+    <h2 id="android">Android-app</h2>
+    <ul>
+      <li>De app vraagt <strong>geen extra rechten</strong>: geen toegang tot je contacten, camera, microfoon of locatie.</li>
+      <li>De app leest alleen de bestanden die <strong>jij zelf kiest</strong> (via Openen, Openen met of Delen) en schrijft alleen naar de plek die <strong>jij kiest</strong> bij Opslaan.</li>
+      <li>Internet gebruikt de app alleen om PdfReader zelf van GitHub Pages te laden en bij te werken.</li>
+    </ul>
+
+    <h2 id="contact">Contact</h2>
+    <p>Vragen over privacy? Neem contact op via de <a href="https://bruindav.github.io/DigidaveStore/" target="_blank" rel="noopener noreferrer">DigiDave Store-pagina</a>.</p>
+    <p>Verandert er iets aan deze privacyverklaring, dan zie je dat aan de datum bovenaan.</p>
+  </main>
+  <footer class="info-voet">
+    <p>PdfReader versie <span data-versie>fix-5</span> · gratis en zonder reclame · <a href="https://bruindav.github.io/DigidaveStore/" target="_blank" rel="noopener noreferrer">DigiDave Store</a></p>
+  </footer>
+</body>
+</html>

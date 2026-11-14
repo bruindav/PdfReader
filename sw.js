@@ -2,9 +2,11 @@
 // fix-2: aantekeningen-modules en pdf-lib in de precache; fontkit + Noto Sans in de runtime-cache.
 // fix-3: js/android-bridge.js (koppeling met de Android-app) in de precache.
 // fix-4: nieuwe versie (robuuster opslaan in de Android-app).
+// fix-5: info-pagina's (help/privacy/disclaimer) + licentieteksten in de precache; navigaties naar een
+//        gecachete pagina krijgen die pagina (voorheen kreeg elke navigatie index.html).
 // PdfReader service worker: offline app-shell + ontvangst van gedeelde PDF's (share_target).
 // Verhoog VERSION bij elke release, zodat gebruikers de melding "Nieuwe versie beschikbaar" krijgen.
-const VERSION = 'fix-4';
+const VERSION = 'fix-5';
 const SHELL_CACHE = `pdfreader-shell-${VERSION}`;
 const RUNTIME_CACHE = `pdfreader-runtime-${VERSION}`;
 const SHARE_CACHE = 'pdfreader-share';
@@ -29,6 +31,17 @@ const SHELL = [
   'js/annot-store.js',
   'js/annot-export.js',
   'js/android-bridge.js',
+  // fix-5
+  'js/versie.js',
+  'js/infovenster.js',
+  'js/infopagina.js',
+  'css/info.css',
+  'help.html',
+  'privacy.html',
+  'disclaimer.html',
+  `${PDFJS}LICENSE`,
+  'vendor/pdf-lib/LICENSE-pdf-lib.md',
+  'vendor/fonts/OFL.txt',
   // pdf-lib (lazy geladen bij opslaan met aantekeningen; vooraf gecachet zodat het ook offline werkt).
   'vendor/pdf-lib/pdf-lib.esm.min.js',
   'icons/icon.svg',
@@ -116,6 +129,18 @@ self.addEventListener('fetch', (event) => {
   if (request.mode === 'navigate') {
     event.respondWith((async () => {
       const cache = await caches.open(SHELL_CACHE);
+      const scope = scopeUrl().pathname;
+      const isShell = url.pathname === scope || url.pathname === `${scope}index.html`;
+      if (!isShell) {
+        // fix-5: eigen pagina uit de cache (bijv. help.html?ingebed=1), anders het netwerk.
+        const own = await cache.match(request, { ignoreSearch: true });
+        if (own) return own;
+        try {
+          return await fetch(request);
+        } catch {
+          /* offline: val terug op de app */
+        }
+      }
       const cached = await cache.match('./') || await cache.match('index.html');
       if (cached) return cached;
       return fetch(request);

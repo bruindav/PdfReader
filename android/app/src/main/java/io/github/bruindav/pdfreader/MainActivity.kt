@@ -7,6 +7,10 @@
 //          geschreven; resultaten wachten tot de web-app weer 'ready' meldt;
 //        - controle vóór de mapkiezer (aantal bytes, > 0, begint met %PDF-), schrijven met "wt"/"w",
 //          flush + sync, grootte controleren; mislukt het, dan wordt het lege document verwijderd.
+// fix-5: tekstvergroting van Android (lettergrootte in Instellingen -> WebView-textZoom) begrensd op 115%.
+//        Bij grote lettergroottes liepen de labels van de onderbalk over elkaar. De PDF zelf wordt niet
+//        door textZoom vergroot; daarvoor is zoomen (knijpen, Groter) bedoeld. Info-pagina's (help.html,
+//        privacy.html, disclaimer.html) openen binnen de app; de terugknop werkt via de WebView-geschiedenis.
 // PdfReader voor Android: een WebView-schil rond de web-app op https://bruindav.github.io/PdfReader/.
 // - Verschijnt in "Openen met" en "Delen" voor PDF's en kan standaard-PDF-app worden.
 // - Geeft de bytes van het gekozen bestand door aan de web-app via een berichtenbrug
@@ -87,6 +91,7 @@ class MainActivity : ComponentActivity() {
         const val CHUNK = 512 * 1024
         const val PDF_MIME = "application/pdf"
         const val TAG = "PdfReader"
+        const val MAX_TEXT_ZOOM = 115 // fix-5: zie configureWebView()
     }
 
     /** Een PDF die de web-app naar ons stuurt om op te slaan of te delen. */
@@ -204,6 +209,10 @@ class MainActivity : ComponentActivity() {
         super.onConfigurationChanged(newConfig)
         // Donkere/lichte modus wisselt zonder herstart (configChanges=uiMode).
         root.setBackgroundColor(ContextCompat.getColor(this, R.color.pdfreader_achtergrond))
+        // fix-5: lettergrootte gewijzigd terwijl de app open is (configChanges=fontScale): opnieuw begrenzen.
+        if (::webView.isInitialized) {
+            webView.settings.textZoom = (newConfig.fontScale * 100).toInt().coerceIn(50, MAX_TEXT_ZOOM)
+        }
     }
 
     override fun onDestroy() {
@@ -293,6 +302,11 @@ class MainActivity : ComponentActivity() {
             builtInZoomControls = false
             displayZoomControls = false
             setSupportZoom(false)
+            // fix-5: Android neemt de systeemlettergrootte over als textZoom (Samsung: tot 200%+).
+            // Dat vergroot alle tekst van de web-app, maar niet de vaste maten van knoppen en balken:
+            // de labels in de onderbalk liepen daardoor over elkaar. Begrenzen op 115% houdt de app
+            // bruikbaar; leesbaarheid van het document zelf komt van zoomen in de PDF (onbegrensd tot 400%).
+            if (textZoom > MAX_TEXT_ZOOM) textZoom = MAX_TEXT_ZOOM
         }
 
         webView.webViewClient = object : WebViewClient() {

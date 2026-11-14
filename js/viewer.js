@@ -1,6 +1,7 @@
 // fix-1
 // fix-2: pinch schuift nu ook mee (scrollen met 2 vingers, nodig in de tekenmodus) en
 //        dubbeltik-zoom is uit te zetten (doubleTapZoom = false in de tekenmodus).
+// fix-5: lagere minimale zoom en "passend op breedte" als tussenstap bij Groter/Kleiner.
 // Module "viewer": pagina's tonen, lazy renderen, zoomen (knoppen, wiel, pinch) en navigeren.
 //
 // Lagen per pagina (absoluut gestapeld in <section class="pagina">):
@@ -15,8 +16,10 @@ import { bus } from './eventbus.js';
 import { pdfjsLib } from './loader.js';
 
 const CSS_UNITS = 96 / 72;
-export const ZOOM_STEPS = [0.5, 0.67, 0.75, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
-export const ZOOM_MIN = 0.5;
+export const ZOOM_STEPS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
+// fix-5: 25% als ondergrens, zodat "Kleiner" op een smalle telefoon (360 px) altijd tot onder
+//        "passend op breedte" kan; bij 50% viel een A4 daar rechts buiten beeld.
+export const ZOOM_MIN = 0.25;
 export const ZOOM_MAX = 4;
 const FIT_MIN = 0.1; // passend-modi mogen onder 50% (smalle telefoons)
 const PADDING = 12; // moet overeenkomen met .paginas padding in CSS
@@ -175,13 +178,25 @@ export class Viewer {
     this.#scheduleRender(RERENDER_DELAY);
   }
 
+  // fix-5: "passend op breedte" is een tussenstap. Ligt de breedtepassing tussen de huidige zoom en
+  //        de volgende stap, dan stopt Groter/Kleiner daar eerst (de pagina past dan precies).
   zoomIn(anchor) {
     const next = ZOOM_STEPS.find((s) => s > this.scale + 0.005);
+    const fit = this.#resolve('width');
+    if (this.mode !== 'width' && fit > this.scale + 0.005 && (!next || fit < next - 0.005)) {
+      this.setZoom('width', anchor);
+      return;
+    }
     if (next) this.setZoom(next, anchor);
   }
 
   zoomOut(anchor) {
     const prev = [...ZOOM_STEPS].reverse().find((s) => s < this.scale - 0.005);
+    const fit = this.#resolve('width');
+    if (this.mode !== 'width' && fit < this.scale - 0.005 && (!prev || fit > prev + 0.005)) {
+      this.setZoom('width', anchor);
+      return;
+    }
     if (prev) this.setZoom(prev, anchor);
   }
 

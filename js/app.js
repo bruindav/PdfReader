@@ -4,6 +4,7 @@
 // fix-4: bij openen worden de bytes eenmaal in het geheugen gekopieerd (doc.blob), zodat "Origineel opslaan"
 //        niet afhangt van een bestand/content://-adres dat later niet meer leesbaar is; duidelijke meldingen
 //        als opslaan via de Android-app mislukt.
+// fix-5: ⋮-menu en info-venster (help.html, privacy.html, disclaimer.html), zie infovenster.js.
 // PdfReader – hoofdmodule: koppelt UI, loader, viewer, aantekeningen, opslaan en service worker.
 import { bus } from './eventbus.js';
 import { loadPdf, LoadError } from './loader.js';
@@ -14,6 +15,7 @@ import { announce, toast, openDialog, anyDialogOpen, wireDialogCloseButtons, set
 import { initInstall, isIOS, maybeShowIosHelpOnce } from './install.js';
 import { Annotations } from './annotations.js';
 import { isAndroidApp, initAndroidBridge, AndroidSaveError } from './android-bridge.js';
+import { initInfo } from './infovenster.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -607,11 +609,16 @@ function openHelp() {
   openDialog($('dlg-help'));
 }
 $('link-help').addEventListener('click', openHelp);
-$('btn-wis').addEventListener('click', async () => {
+async function wisGeschiedenis() {
   clearHistory();
   const done = await annotations.clearStored();
   toast(done ? 'Geschiedenis gewist.' : 'Geschiedenis gewist. Aantekeningen zijn bewaard.', { type: 'succes' });
-});
+  return done;
+}
+$('btn-wis').addEventListener('click', wisGeschiedenis);
+
+// fix-5: ⋮-menu en info-pagina's; de knop "Gegevens wissen" op privacy.html roept wisGeschiedenis aan.
+initInfo({ onWis: wisGeschiedenis, beforeOpen: () => closeZoomMenu() });
 
 // ---------- Knoppen openen ----------
 
