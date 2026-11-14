@@ -1,12 +1,15 @@
 // fix-1
+// fix-3: in de Android-app geldt PdfReader als geïnstalleerd: geen installatieknoppen of -banner.
 // Installatie-hint en installatieknop (beforeinstallprompt waar beschikbaar).
 import { getFlag, setFlag } from './storage.js';
 import { openDialog } from './ui.js';
+import { isAndroidApp } from './android-bridge.js';
 
 const $ = (id) => document.getElementById(id);
 let deferredPrompt = null;
 
 export const isStandalone = () =>
+  isAndroidApp() ||
   (typeof matchMedia === 'function' && matchMedia('(display-mode: standalone)').matches) ||
   navigator.standalone === true;
 
@@ -119,6 +122,9 @@ export function initInstall() {
 
   if (isStandalone()) {
     $('link-installeer').hidden = true;
+    $('btn-installeer').hidden = true;
+    $('btn-installeer-start').hidden = true;
+    $('installbanner').hidden = true;
     return;
   }
   // Banner eenmalig vanaf het 2e gebruik.

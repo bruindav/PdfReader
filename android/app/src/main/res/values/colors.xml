@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- fix-3 -->
+<resources>
+    <color name="ic_launcher_background">#1F5FAD</color>
+    <color name="pdfreader_blauw">#1F5FAD</color>
+    <color name="pdfreader_achtergrond">#FAFAF7</color>
+</resources>

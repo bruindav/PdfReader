@@ -1,5 +1,6 @@
 // fix-1
 // fix-2: aantekeningen (tekenmodus), opslaan met/zonder aantekeningen, bevestigingsdialoog.
+// fix-3: Android-app (WebView): PDF's uit "Openen met"/delen/bestandskiezer komen via android-bridge.js binnen.
 // PdfReader – hoofdmodule: koppelt UI, loader, viewer, aantekeningen, opslaan en service worker.
 import { bus } from './eventbus.js';
 import { loadPdf, LoadError } from './loader.js';
@@ -9,6 +10,7 @@ import { getZoomPref, setZoomPref, getDocState, setDocState, clearHistory } from
 import { announce, toast, openDialog, anyDialogOpen, wireDialogCloseButtons, setDisabled } from './ui.js';
 import { initInstall, isIOS, maybeShowIosHelpOnce } from './install.js';
 import { Annotations } from './annotations.js';
+import { isAndroidApp, initAndroidBridge } from './android-bridge.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -433,7 +435,7 @@ async function openSave() {
   $('naam-fout').textContent = '';
   const route = saveRoute(doc.blob);
   $('opslaan-hulp').textContent =
-    route === 'picker' ? 'Je kiest hierna zelf de map.'
+    route === 'picker' || route === 'android' ? 'Je kiest hierna zelf de map.'
       : route === 'share' ? 'Kies hierna "Bewaar in Bestanden" (iPhone) of een app of map.'
         : 'Het bestand komt in je map Downloads.';
   $('btn-delen').hidden = !canShareFile(doc.blob);
@@ -562,7 +564,9 @@ $('btn-delen').addEventListener('click', async () => {
 
 function openHelp() {
   $('help-ios').hidden = !isIOS;
-  $('help-delen').textContent = isIOS
+  $('help-delen').textContent = isAndroidApp()
+    ? 'Kies in de andere app (bijvoorbeeld je bank-app) "Openen met" of "Delen" en dan PdfReader. Kies "Altijd" om PdfReader de standaard-app voor PDF\'s te maken.'
+    : isIOS
     ? 'Op de iPhone kan een web-app geen bestanden uit andere apps ontvangen. Zo gaat het snel:'
     : 'Installeer PdfReader als app. Daarna kun je op Android een PDF vanuit een andere app delen met PdfReader, en op de computer een PDF openen via "Openen met".';
   openDialog($('dlg-help'));
@@ -734,6 +738,20 @@ function initServiceWorker() {
   }).catch(() => { /* offline-functie niet beschikbaar; app werkt verder */ });
 }
 
+// ---------- Android-app ----------
+
+function initAndroid() {
+  if (!isAndroidApp()) return;
+  document.documentElement.classList.add('android-app');
+  initAndroidBridge({
+    onFile: (file) => {
+      if (anyDialogOpen()) for (const d of document.querySelectorAll('dialog[open]')) d.close();
+      openBlob(file, file.name);
+    },
+    onError: (code) => showError(code, !!doc),
+  });
+}
+
 // ---------- Start ----------
 
 wireDialogCloseButtons();
@@ -743,6 +761,8 @@ initServiceWorker();
 showState('start');
 takeSharedFile().then((shared) => {
   if (!shared) maybeShowIosHelpOnce(openHelp);
+  // Pas na de start "ready" melden; de app stuurt dan een eventueel wachtend bestand.
+  initAndroid();
 });
 
 // Voor tests en latere modules (bijv. annotaties).

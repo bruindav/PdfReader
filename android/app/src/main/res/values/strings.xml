@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- fix-3 -->
+<resources>
+    <string name="app_name">PdfReader</string>
+    <string name="geen_verbinding">PdfReader kon niet laden. Controleer je internetverbinding. Na het eerste gebruik werkt PdfReader ook zonder internet.</string>
+    <string name="opnieuw">Opnieuw proberen</string>
+    <string name="opgeslagen_fout">Opslaan is niet gelukt.</string>
+    <string name="delen_titel">PDF delen</string>
+    <string name="webview_te_oud">Werk \"Android System WebView\" bij via de Play Store om PDF\'s vanuit andere apps te openen.</string>
+    <string name="geen_app">Geen app gevonden om dit te openen.</string>
+</resources>
