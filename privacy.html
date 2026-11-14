@@ -1,5 +1,6 @@
 <!doctype html>
 <!-- fix-5 -->
+<!-- fix-6: Recent geopend (kopie van de laatste 6 PDF's op dit toestel) -->
 <html lang="nl">
 <head>
   <meta charset="utf-8">
@@ -31,6 +32,7 @@
     <p class="bijgewerkt">Laatst bijgewerkt: 14 november 2026</p>
     <div class="kader">
       <p class="intro"><strong>Kort gezegd:</strong> alles gebeurt op je eigen toestel. Je PDF's en aantekeningen worden nergens naartoe gestuurd.</p>
+      <p>Voor <strong>Recent geopend</strong> bewaart PdfReader een kopie van de laatste 6 PDF's die je opende, alleen op dit toestel. Dat kun je uitzetten en wissen (zie hieronder).</p>
     </div>
 
     <h2 id="lokaal">Alles blijft op je toestel</h2>
@@ -44,23 +46,30 @@
     <h2 id="bewaard">Wat PdfReader op je toestel bewaart</h2>
     <p>Om de app prettig te laten werken, bewaart PdfReader een paar dingen <em>alleen op je eigen toestel</em>:</p>
     <ul>
-      <li><strong>Je aantekeningen</strong> (in de browser-opslag IndexedDB), gekoppeld aan een kenmerk van het document. De PDF zelf wordt niet bewaard.</li>
+      <li><strong>Je aantekeningen</strong> (in de browser-opslag IndexedDB), gekoppeld aan een kenmerk van het document.</li>
+      <li><strong>Recent geopend</strong> (ook in IndexedDB): van de laatste 6 PDF's die je opende een <strong>kopie van het bestand</strong>, de bestandsnaam, de grootte, het aantal pagina's, wanneer je hem opende en een kleine afbeelding van de eerste pagina. Zo kun je een PDF uit bijvoorbeeld je bank-app later weer openen, ook als die app het bestand niet meer deelt. Het oudste document valt er vanzelf af. PDF's groter dan 50 MB worden niet bewaard.
+        <ul>
+          <li>Van een PDF met een <strong>wachtwoord</strong> bewaart PdfReader alleen het originele, nog steeds beveiligde bestand, zonder afbeelding van de eerste pagina. Het wachtwoord wordt nooit bewaard; bij opnieuw openen vraagt PdfReader er weer om.</li>
+          <li>Uitzetten: <strong>⋮ → Recent geopend</strong> → schakelaar <em>Recente documenten onthouden</em>. Uitzetten wist meteen de lijst en de kopieën.</li>
+          <li>Eén document weghalen: tik in de lijst op het kruisje (<em>Uit lijst verwijderen</em>). Alles weghalen: <em>Lijst wissen</em>.</li>
+        </ul>
+      </li>
       <li><strong>Voorkeuren</strong> (in localStorage): per document de laatste pagina en zoom, je zoomvoorkeur, de laatst gekozen kleur en dikte, en of je een uitleg al hebt gezien. Geen bestandsnamen of mappen.</li>
       <li><strong>De app zelf</strong> (in de cache van de browser), zodat PdfReader ook zonder internet werkt.</li>
     </ul>
     <p>Niemand anders kan hierbij, ook de maker van PdfReader niet.</p>
 
     <h2 id="wissen">Gegevens wissen</h2>
-    <p class="alleen-ingebed">Met deze knop wis je de geschiedenis (laatste pagina en zoom per document). Heb je aantekeningen bewaard, dan vraagt PdfReader eerst of die ook weg mogen.</p>
-    <p><button type="button" id="wis-gegevens" class="knop" hidden>Geschiedenis en aantekeningen wissen</button></p>
+    <p class="alleen-ingebed">Met deze knop wis je de geschiedenis (laatste pagina en zoom per document) en de lijst <em>Recent geopend</em> met de bewaarde kopieën. Heb je aantekeningen bewaard, dan vraagt PdfReader eerst of die ook weg mogen.</p>
+    <p><button type="button" id="wis-gegevens" class="knop" hidden>Geschiedenis, recente documenten en aantekeningen wissen</button></p>
     <p id="wis-status" class="wis-status alleen-ingebed" role="status"></p>
-    <p class="alleen-los">In PdfReader vind je de knop <strong>Gegevens wissen</strong> via het menu <strong>⋮ → Privacy</strong>, of bij <strong>Help → Geschiedenis wissen</strong> op het startscherm.</p>
+    <p class="alleen-los">In PdfReader vind je de knop <strong>Gegevens wissen</strong> via het menu <strong>⋮ → Privacy</strong>, of bij <strong>Help → Geschiedenis wissen</strong> op het startscherm. Alleen de recente documenten wissen: <strong>⋮ → Recent geopend → Lijst wissen</strong>.</p>
     <p>Alles in één keer weg, inclusief de app-cache:</p>
     <ul>
       <li><strong>Android-app:</strong> Instellingen → Apps → PdfReader → Opslag → <em>Gegevens wissen</em>. Of verwijder de app.</li>
       <li><strong>Browser:</strong> wis de sitegegevens van <em>bruindav.github.io</em> in de instellingen van je browser, of verwijder de geïnstalleerde web-app.</li>
     </ul>
-    <p>Let op: gewiste aantekeningen kun je niet terughalen. Sla belangrijke aantekeningen eerst op in de PDF.</p>
+    <p>Let op: gewiste aantekeningen kun je niet terughalen. Je originele PDF-bestanden (bijvoorbeeld in je Downloads of je bank-app) worden door wissen niet aangeraakt. Sla belangrijke aantekeningen eerst op in de PDF.</p>
 
     <h2 id="hosting">Hosting via GitHub Pages</h2>
     <p>De bestanden van de app (zoals deze pagina) worden geleverd door <strong>GitHub Pages</strong>. Bij het laden van de app kan GitHub technische gegevens vastleggen in serverlogs, zoals je IP-adres en het type browser. Dat is nodig om de website te leveren en te beveiligen. Je PDF's gaan hier nooit mee. Lees de <a href="https://docs.github.com/nl/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">privacyverklaring van GitHub</a> voor meer informatie.</p>
@@ -78,7 +87,7 @@
     <p>Verandert er iets aan deze privacyverklaring, dan zie je dat aan de datum bovenaan.</p>
   </main>
   <footer class="info-voet">
-    <p>PdfReader versie <span data-versie>fix-5</span> · gratis en zonder reclame · <a href="https://bruindav.github.io/DigidaveStore/" target="_blank" rel="noopener noreferrer">DigiDave Store</a></p>
+    <p>PdfReader versie <span data-versie>fix-6</span> · gratis en zonder reclame · <a href="https://bruindav.github.io/DigidaveStore/" target="_blank" rel="noopener noreferrer">DigiDave Store</a></p>
   </footer>
 </body>
 </html>

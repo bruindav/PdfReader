@@ -1,6 +1,7 @@
 /* fix-1 */
 /* fix-2: aantekenen (tekenmodus, gereedschapsbalk, kleurpaneel, tekstvak, selectie, opslaankeuze) */
 /* fix-5: onderbalk en tekenbalk robuust bij smalle schermen en vergrote tekst; ⋮-menu en info-venster */
+/* fix-6: "Recent geopend" (startscherm, dialoog, schakelaar) */
 /* PdfReader – stijlen. Geen externe fonts, geen inline styles (CSP). */
 
 :root {
@@ -722,4 +723,87 @@ body.tekenmodus .kop { box-shadow: inset 0 -3px 0 var(--accent); }
 @media (min-width: 720px) {
   .infovenster { width: min(860px, 94vw); height: min(92vh, 1000px); margin: auto; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 12px 40px rgba(0, 0, 0, .3); }
   .infovenster::backdrop { background: var(--overlay); }
+}
+
+/* ================= fix-6: recent geopend ================= */
+
+.menu-recent { display: flex; align-items: center; gap: 10px; }
+.menu-recent .icon { color: var(--accent); }
+.menu-scheiding { height: 1px; margin: 4px 8px; background: var(--border); flex: none; }
+
+.recent { width: 100%; max-width: 520px; text-align: left; }
+.recent-start { margin-top: 28px; }
+.recent-kop { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.recent-titel { margin: 0; font-size: 18px; font-weight: 600; }
+.recent-wis { min-height: var(--tap); font-size: 15px; color: var(--text-muted); }
+
+.recent-lijst {
+  list-style: none; margin: 0; padding: 0;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden;
+}
+.recent-item { display: flex; align-items: center; min-width: 0; }
+.recent-item + .recent-item { border-top: 1px solid var(--border); }
+.recent-open {
+  flex: 1 1 auto; min-width: 0; min-height: 68px;
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 4px 8px 12px;
+  font: inherit; color: var(--text); text-align: left;
+  background: transparent; border: 0; cursor: pointer;
+}
+.recent-open:hover, .recent-open:focus-visible { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.recent-open:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+.recent-mini {
+  flex: none; width: 42px; height: 54px;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  background: #FFFFFF; border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text-muted);
+}
+.recent-mini:has(.recent-mini-icoon) { background: var(--bg); }
+.recent-mini img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+.recent-mini-icoon { width: 22px; height: 22px; }
+.recent-tekst { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.recent-naam { font-size: 16px; font-weight: 600; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.recent-meta { font-size: 14px; line-height: 1.3; color: var(--text-muted); overflow-wrap: anywhere; }
+.recent-weg { width: var(--tap); height: var(--tap); margin-right: 4px; color: var(--text-muted); }
+.recent-weg:hover { color: var(--text); background: color-mix(in srgb, var(--text) 8%, transparent); }
+.recent-weg .icon { width: 20px; height: 20px; }
+
+/* Startscherm met lijst: kleiner logo, alles bovenaan zodat de lijst zonder scrollen in beeld komt. */
+.start.heeft-recent { justify-content: flex-start; padding-top: 20px; }
+.start.heeft-recent .start-icoon { width: 56px; height: 56px; margin-bottom: 8px; }
+.start.heeft-recent .start-tekst { margin-bottom: 14px; }
+.start.heeft-recent .privacy { margin-top: 12px; font-size: 15px; }
+.start.heeft-recent .start-links { margin-top: 16px; }
+@media (min-width: 720px) {
+  .start.heeft-recent { justify-content: center; }
+  .start.heeft-recent .dropvak { padding: 28px 32px; }
+}
+
+/* Dialoog */
+.recent-dialoog .recent-lijst { margin: 0 0 12px; }
+.recent-leeg { margin: 4px 0 16px !important; }
+.dialoog .schakelaar {
+  position: relative;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  min-height: var(--tap); margin: 4px 0 4px; font-weight: 600; cursor: pointer;
+}
+.schakelaar input {
+  position: absolute; right: 0; top: 50%; width: 52px; height: 32px; margin: -16px 0 0;
+  opacity: 0; cursor: pointer;
+}
+.schakelaar-baan {
+  position: relative; flex: none; width: 52px; height: 32px; border-radius: 16px;
+  background: var(--border); transition: background .15s;
+}
+.schakelaar-baan::after {
+  content: ""; position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--surface); box-shadow: 0 1px 3px rgba(0, 0, 0, .3); transition: transform .15s;
+}
+.schakelaar input:checked + .schakelaar-baan { background: var(--accent); }
+.schakelaar input:checked + .schakelaar-baan::after { transform: translateX(20px); background: var(--on-accent); }
+.schakelaar input:focus-visible + .schakelaar-baan { outline: 3px solid var(--focus); outline-offset: 2px; }
+@media (forced-colors: active) {
+  .schakelaar input { opacity: 1; position: static; margin: 0; }
+  .schakelaar-baan { display: none; }
 }

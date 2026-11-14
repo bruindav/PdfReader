@@ -1,4 +1,5 @@
 // fix-5
+// fix-6: wis-melding noemt ook de lijst "Recent geopend".
 // Script voor help.html, privacy.html en disclaimer.html.
 // - ?ingebed=1: de pagina staat in het info-venster van de app (iframe, zelfde origin). Dan geen eigen
 //   kopregel, interne links via het venster (zonder nieuwe geschiedenis-items) (de terugknop sluit dan het venster) en
@@ -59,8 +60,8 @@ if (wis && ingebed) {
     if (e.origin !== location.origin || e.source !== window.parent) return;
     if (e.data && e.data.type === 'pdfreader-gewist' && wisStatus) {
       wisStatus.textContent = e.data.done
-        ? 'Klaar: geschiedenis en aantekeningen zijn gewist.'
-        : 'Geschiedenis is gewist. Je aantekeningen zijn bewaard.';
+        ? 'Klaar: geschiedenis, recente documenten en aantekeningen zijn gewist.'
+        : 'Geschiedenis en recente documenten zijn gewist. Je aantekeningen zijn bewaard.';
     }
   });
 }

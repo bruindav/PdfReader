@@ -4,9 +4,10 @@
 // fix-4: nieuwe versie (robuuster opslaan in de Android-app).
 // fix-5: info-pagina's (help/privacy/disclaimer) + licentieteksten in de precache; navigaties naar een
 //        gecachete pagina krijgen die pagina (voorheen kreeg elke navigatie index.html).
+// fix-6: js/recent.js en js/recent-store.js (Recent geopend) in de precache.
 // PdfReader service worker: offline app-shell + ontvangst van gedeelde PDF's (share_target).
 // Verhoog VERSION bij elke release, zodat gebruikers de melding "Nieuwe versie beschikbaar" krijgen.
-const VERSION = 'fix-5';
+const VERSION = 'fix-6';
 const SHELL_CACHE = `pdfreader-shell-${VERSION}`;
 const RUNTIME_CACHE = `pdfreader-runtime-${VERSION}`;
 const SHARE_CACHE = 'pdfreader-share';
@@ -39,6 +40,9 @@ const SHELL = [
   'help.html',
   'privacy.html',
   'disclaimer.html',
+  // fix-6
+  'js/recent.js',
+  'js/recent-store.js',
   `${PDFJS}LICENSE`,
   'vendor/pdf-lib/LICENSE-pdf-lib.md',
   'vendor/fonts/OFL.txt',
