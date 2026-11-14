@@ -1,5 +1,6 @@
 // fix-1
-// PdfReader – hoofdmodule: koppelt UI, loader, viewer, opslaan en service worker.
+// fix-2: aantekeningen (tekenmodus), opslaan met/zonder aantekeningen, bevestigingsdialoog.
+// PdfReader – hoofdmodule: koppelt UI, loader, viewer, aantekeningen, opslaan en service worker.
 import { bus } from './eventbus.js';
 import { loadPdf, LoadError } from './loader.js';
 import { Viewer, ZOOM_MIN, ZOOM_MAX } from './viewer.js';
@@ -7,6 +8,7 @@ import { savePdf, sharePdf, saveRoute, canShareFile, sanitizeBaseName, defaultBa
 import { getZoomPref, setZoomPref, getDocState, setDocState, clearHistory } from './storage.js';
 import { announce, toast, openDialog, anyDialogOpen, wireDialogCloseButtons, setDisabled } from './ui.js';
 import { initInstall, isIOS, maybeShowIosHelpOnce } from './install.js';
+import { Annotations } from './annotations.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -30,6 +32,7 @@ const els = {
   zoomWaarde: $('zoom-waarde'),
   btnBreedte: $('btn-breedte'),
   btnOpslaan: $('btn-opslaan'),
+  btnAantekenen: $('btn-aantekenen'),
   tellers: [$('teller-kop'), $('teller-balk')],
   zoommenu: $('zoommenu'),
   overlay: $('dropoverlay'),
@@ -45,6 +48,21 @@ const MESSAGES = {
 
 const viewer = new Viewer(els.lezer, els.paginas);
 const isMobileLayout = () => matchMedia('(max-width: 719.98px)').matches;
+
+/** Eenvoudige bevestigingsdialoog. */
+function confirmDialog({ title, text, ok = 'OK' }) {
+  return new Promise((resolve) => {
+    const dlg = $('dlg-bevestig');
+    $('dlg-bev-titel').textContent = title;
+    $('dlg-bev-tekst').textContent = text;
+    $('dlg-bev-ok').textContent = ok;
+    dlg.returnValue = '';
+    dlg.addEventListener('close', () => resolve(dlg.returnValue === 'ok'), { once: true });
+    openDialog(dlg, { focus: $('dlg-bev-ok') });
+  });
+}
+
+const annotations = new Annotations({ viewer, scrollEl: els.lezer, confirm: confirmDialog });
 
 /** Huidig document: originele Blob (ongewijzigd) + naam + fingerprint. */
 let doc = null;
@@ -68,6 +86,7 @@ function updateToolbar() {
   setDisabled(els.btnZoom, !open);
   setDisabled(els.btnBreedte, !open);
   setDisabled(els.btnOpslaan, !open || !doc);
+  annotations.setEnabled(open && !!doc);
   for (const t of els.tellers) setDisabled(t, !open);
 
   if (open) {
@@ -119,9 +138,13 @@ async function openBlob(blob, name) {
   }, 300);
 
   let pdf;
+  let lastPassword = null;
   try {
     pdf = await loadPdf(blob, {
-      askPassword,
+      askPassword: async (incorrect) => {
+        lastPassword = await askPassword(incorrect);
+        return lastPassword;
+      },
       onProgress: (f) => {
         els.voortgang.hidden = false;
         els.voortgang.value = Math.round(f * 100);
@@ -146,7 +169,8 @@ async function openBlob(blob, name) {
   const saved = fp ? getDocState(fp) : null;
   const zoom = (saved && saved.zoom) || getZoomPref() || (isMobileLayout() ? 'width' : 'auto');
 
-  doc = { blob, name: fileName, fp };
+  // Wachtwoord alleen in het geheugen (nodig om de opgeslagen PDF met aantekeningen te controleren).
+  doc = { blob, name: fileName, fp, password: lastPassword };
   setTitle(fileName || 'Naamloos document');
   showState('lezen');
   suppressPref = true;
@@ -163,6 +187,7 @@ async function openBlob(blob, name) {
   updateToolbar();
   announce(`PDF geopend, ${viewer.pageCount} ${viewer.pageCount === 1 ? 'pagina' : "pagina's"}`);
   bus.emit('document-loaded', { name: fileName, pages: viewer.pageCount, fingerprint: fp });
+  annotations.onDocumentLoaded(pdf);
 }
 
 function showError(code, keepDoc) {
@@ -172,6 +197,7 @@ function showError(code, keepDoc) {
     toast(`Dit bestand kan niet worden geopend. ${text}`, { type: 'fout' });
     return;
   }
+  annotations.onDocumentClosed();
   viewer.close();
   doc = null;
   setTitle('');
@@ -345,9 +371,63 @@ function suggestedBase() {
   return sanitizeBaseName(doc && doc.name) || defaultBaseName();
 }
 
-function openSave() {
+/** Opslaan-dialoog: keuze met/zonder aantekeningen + vooraf maken (sneller en binnen de gebruikersactie). */
+const saveState = { variant: 'origineel', pending: null, flatten: false, nameTouched: false, info: null };
+
+const withAnnotations = () => annotations.count > 0 && saveState.variant === 'met';
+
+function annotatedBase() {
+  return `${suggestedBase()} (aantekeningen)`;
+}
+
+function startExport() {
+  saveState.pending = null;
+  if (!withAnnotations() || !viewer.pdf || !doc) return;
+  const p = import('./annot-export.js').then((m) => m.exportAnnotated({
+    pdf: viewer.pdf, blob: doc.blob, items: annotations.list(), flatten: saveState.flatten, password: doc.password,
+  })).then((r) => r.blob, (e) => {
+    const err = new Error('Opslaan met aantekeningen is niet gelukt');
+    err.name = 'ExportError';
+    err.cause = e;
+    throw err;
+  });
+  p.catch(() => {});
+  saveState.pending = p;
+}
+
+function updateSaveChoice() {
+  const n = annotations.count;
+  const box = $('opslaan-keuze');
+  box.hidden = n === 0;
+  if (!n) { saveState.variant = 'origineel'; return; }
+  const met = saveState.variant === 'met';
+  const info = saveState.info;
+  const incremental = info && info.route === 'pdfjs';
+  $('vastzetten-rij').hidden = !met || incremental;
+  $('opslaan-info').textContent = met
+    ? (n === 1 ? 'Aantekeningen worden in de PDF opgeslagen.' : `${n} aantekeningen worden in de PDF opgeslagen.`)
+    : 'Het originele bestand wordt opgeslagen, zonder aantekeningen. Je aantekeningen blijven in de app.';
+  const sec = $('opslaan-beveiligd');
+  sec.hidden = !(met && info && (info.encrypted || info.signed));
+  if (info && info.encrypted) {
+    sec.textContent = 'Deze PDF is beveiligd. De aantekeningen worden toegevoegd en de beveiliging blijft behouden. Vastzetten is hierbij niet mogelijk.';
+  } else if (info && info.signed) {
+    sec.textContent = 'Deze PDF is digitaal ondertekend. De aantekeningen worden als aanvulling opgeslagen; de handtekening blijft bewaard, maar sommige apps melden dat het document na ondertekening is gewijzigd.';
+  }
+  if (!saveState.nameTouched) $('naam-invoer').value = met ? annotatedBase() : suggestedBase();
+}
+
+async function openSave() {
   if (!doc) return;
+  annotations.commitText();
   const input = $('naam-invoer');
+  const n = annotations.count;
+  saveState.variant = n ? 'met' : 'origineel';
+  saveState.flatten = false;
+  saveState.nameTouched = false;
+  saveState.info = null;
+  $('vastzetten').checked = false;
+  for (const r of document.querySelectorAll('input[name="variant"]')) r.checked = r.value === saveState.variant;
   input.value = suggestedBase();
   input.removeAttribute('aria-invalid');
   $('naam-fout').textContent = '';
@@ -357,8 +437,31 @@ function openSave() {
       : route === 'share' ? 'Kies hierna "Bewaar in Bestanden" (iPhone) of een app of map.'
         : 'Het bestand komt in je map Downloads.';
   $('btn-delen').hidden = !canShareFile(doc.blob);
+  updateSaveChoice();
   openDialog($('dlg-opslaan'), { focus: input });
+  if (n) {
+    startExport();
+    try {
+      const m = await import('./annot-export.js');
+      saveState.info = await m.analyse(viewer.pdf);
+      if (saveState.info.route === 'pdflib') m.preloadPdfLib().catch(() => {});
+    } catch { /* */ }
+    if ($('dlg-opslaan').open) updateSaveChoice();
+  }
 }
+
+for (const r of document.querySelectorAll('input[name="variant"]')) {
+  r.addEventListener('change', () => {
+    if (!r.checked) return;
+    saveState.variant = r.value;
+    updateSaveChoice();
+    startExport();
+  });
+}
+$('vastzetten').addEventListener('change', (e) => {
+  saveState.flatten = e.target.checked;
+  startExport();
+});
 
 function readSaveName() {
   const input = $('naam-invoer');
@@ -374,6 +477,7 @@ function readSaveName() {
 
 $('naam-invoer').addEventListener('input', (e) => {
   const el = e.target;
+  saveState.nameTouched = true;
   const cleaned = el.value.replace(/[\\/:*?"<>|]/g, '-');
   if (cleaned !== el.value) {
     const pos = el.selectionStart;
@@ -383,32 +487,74 @@ $('naam-invoer').addEventListener('input', (e) => {
   if (el.value.trim()) { $('naam-fout').textContent = ''; el.removeAttribute('aria-invalid'); }
 });
 
+/** Inhoud om op te slaan: originele Blob of (Promise van) de PDF met aantekeningen. */
+function saveContent() {
+  if (!withAnnotations()) return { content: doc.blob, annotated: false };
+  if (!saveState.pending) startExport();
+  return { content: saveState.pending, annotated: true };
+}
+
+function exportFailed() {
+  toast('Opslaan met aantekeningen is niet gelukt. Probeer het opnieuw.', {
+    type: 'fout',
+    duration: 10000,
+    action: { label: 'Origineel opslaan', onClick: () => saveOriginalDirect() },
+  });
+}
+
+async function saveOriginalDirect() {
+  if (!doc) return;
+  const name = `${suggestedBase()}.pdf`;
+  try {
+    const result = await savePdf(doc.blob, name);
+    if (result === 'saved') toast(`Opgeslagen als ${name}`, { type: 'succes' });
+  } catch {
+    toast('Opslaan is niet gelukt. Probeer het opnieuw.', { type: 'fout' });
+  }
+}
+
+/** Toont een voortgangsmelding als het maken van de PDF even duurt. */
+function progressFor(promise) {
+  let close = null;
+  const t = setTimeout(() => { close = toast('PDF met aantekeningen wordt gemaakt…', { duration: 0 }); }, 300);
+  Promise.resolve(promise).finally(() => { clearTimeout(t); if (close) close(); }).catch(() => {});
+}
+
 $('form-opslaan').addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = readSaveName();
   if (!name || !doc) return;
+  const { content, annotated } = saveContent();
   $('dlg-opslaan').close('ok');
+  if (annotated) progressFor(content);
   try {
     // Direct (binnen de gebruikersactie) aanroepen: picker/share vereisen dat.
-    const result = await savePdf(doc.blob, name);
+    const result = await savePdf(content, name);
+    if (annotated && result !== 'cancelled') annotations.markExported();
     if (result === 'saved') {
-      toast(`Opgeslagen als ${name}`, { type: 'succes' });
-      announce(`Opgeslagen als ${name}`);
+      const msg = annotated ? `Opgeslagen als ${name}, met aantekeningen.` : `Opgeslagen als ${name}`;
+      toast(msg, { type: 'succes' });
+      announce(msg);
     }
-  } catch {
-    toast('Opslaan is niet gelukt. Probeer het opnieuw.', { type: 'fout' });
+  } catch (err) {
+    if (annotated && err && err.name === 'ExportError') exportFailed();
+    else toast('Opslaan is niet gelukt. Probeer het opnieuw.', { type: 'fout' });
   }
 });
 
 $('btn-delen').addEventListener('click', async () => {
   const name = readSaveName();
   if (!name || !doc) return;
+  const { content, annotated } = saveContent();
   $('dlg-opslaan').close('ok');
+  if (annotated) progressFor(content);
   try {
-    await sharePdf(doc.blob, name);
+    await sharePdf(content, name);
+    if (annotated) annotations.markExported();
   } catch (err) {
     if (err && err.name === 'AbortError') return;
-    toast('Opslaan is niet gelukt. Probeer het opnieuw.', { type: 'fout' });
+    if (annotated && err && err.name === 'ExportError') exportFailed();
+    else toast('Opslaan is niet gelukt. Probeer het opnieuw.', { type: 'fout' });
   }
 });
 
@@ -422,9 +568,10 @@ function openHelp() {
   openDialog($('dlg-help'));
 }
 $('link-help').addEventListener('click', openHelp);
-$('btn-wis').addEventListener('click', () => {
+$('btn-wis').addEventListener('click', async () => {
   clearHistory();
-  toast('Geschiedenis gewist.', { type: 'succes' });
+  const done = await annotations.clearStored();
+  toast(done ? 'Geschiedenis gewist.' : 'Geschiedenis gewist. Aantekeningen zijn bewaard.', { type: 'succes' });
 });
 
 // ---------- Knoppen openen ----------
@@ -599,4 +746,4 @@ takeSharedFile().then((shared) => {
 });
 
 // Voor tests en latere modules (bijv. annotaties).
-window.pdfReader = Object.freeze({ viewer, bus, ZOOM_MIN, ZOOM_MAX });
+window.pdfReader = Object.freeze({ viewer, bus, annotations, ZOOM_MIN, ZOOM_MAX });

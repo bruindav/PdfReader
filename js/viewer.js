@@ -1,4 +1,6 @@
 // fix-1
+// fix-2: pinch schuift nu ook mee (scrollen met 2 vingers, nodig in de tekenmodus) en
+//        dubbeltik-zoom is uit te zetten (doubleTapZoom = false in de tekenmodus).
 // Module "viewer": pagina's tonen, lazy renderen, zoomen (knoppen, wiel, pinch) en navigeren.
 //
 // Lagen per pagina (absoluut gestapeld in <section class="pagina">):
@@ -50,6 +52,7 @@ export class Viewer {
     this.scrollRaf = 0;
     this.pinch = null;
     this.lastTap = null;
+    this.doubleTapZoom = true;
 
     this.io = null;
     this.ro = new ResizeObserver(() => this.#onResize());
@@ -291,9 +294,11 @@ export class Viewer {
     if (e.touches.length === 2) {
       e.preventDefault();
       const [t1, t2] = e.touches;
+      const mid = this.#point((t1.clientX + t2.clientX) / 2, (t1.clientY + t2.clientY) / 2);
       this.pinch = {
         dist: Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY) || 1,
         scale: this.scale,
+        pos: this.#capture(mid), // punt onder het midden van de vingers blijft onder de vingers
       };
       this.lastTap = null;
     } else if (e.touches.length === 1) {
@@ -309,7 +314,16 @@ export class Viewer {
       const d = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
       const target = clamp(this.pinch.scale * (d / this.pinch.dist), Math.min(ZOOM_MIN, this.pinch.scale), ZOOM_MAX);
       const mid = this.#point((t1.clientX + t2.clientX) / 2, (t1.clientY + t2.clientY) / 2);
-      if (Math.abs(target - this.scale) > 0.002) this.setZoom(target, mid, { live: true });
+      const zoomed = Math.abs(target - this.scale) > 0.002;
+      if (zoomed) {
+        this.mode = target;
+        this.#applyScale(target);
+      }
+      this.#restore(this.pinch.pos, mid);
+      if (zoomed) {
+        bus.emit('zoom-changed', { mode: this.mode, scale: this.scale, live: true });
+        this.#scheduleRender(RERENDER_DELAY);
+      }
     } else if (this.tapStart) {
       const t = e.touches[0];
       if (Math.hypot(t.clientX - this.tapStart.x, t.clientY - this.tapStart.y) > 10) this.tapStart = null;
@@ -326,6 +340,7 @@ export class Viewer {
       return;
     }
     // Dubbeltik: wisselen tussen Breedte en 200%.
+    if (!this.doubleTapZoom) { this.tapStart = null; this.lastTap = null; return; }
     if (!this.isOpen || !this.tapStart || e.changedTouches.length !== 1 || e.touches.length) return;
     const t = e.changedTouches[0];
     const now = performance.now();

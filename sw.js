@@ -1,7 +1,8 @@
 // fix-1
+// fix-2: aantekeningen-modules en pdf-lib in de precache; fontkit + Noto Sans in de runtime-cache.
 // PdfReader service worker: offline app-shell + ontvangst van gedeelde PDF's (share_target).
 // Verhoog VERSION bij elke release, zodat gebruikers de melding "Nieuwe versie beschikbaar" krijgen.
-const VERSION = 'fix-1';
+const VERSION = 'fix-2';
 const SHELL_CACHE = `pdfreader-shell-${VERSION}`;
 const RUNTIME_CACHE = `pdfreader-runtime-${VERSION}`;
 const SHARE_CACHE = 'pdfreader-share';
@@ -21,6 +22,12 @@ const SHELL = [
   'js/ui.js',
   'js/install.js',
   'js/nomodule.js',
+  'js/annotations.js',
+  'js/annot-model.js',
+  'js/annot-store.js',
+  'js/annot-export.js',
+  // pdf-lib (lazy geladen bij opslaan met aantekeningen; vooraf gecachet zodat het ook offline werkt).
+  'vendor/pdf-lib/pdf-lib.esm.min.js',
   'icons/icon.svg',
   'icons/favicon.svg',
   'icons/favicon-32.png',
@@ -39,6 +46,8 @@ const SHELL = [
     'LiberationSans-Bold.ttf', 'LiberationSans-BoldItalic.ttf', 'LiberationSans-Italic.ttf', 'LiberationSans-Regular.ttf']
     .map((f) => `${PDFJS}standard_fonts/${f}`),
   // cmaps (alleen nodig voor o.a. Aziatische lettertypen) worden bij eerste gebruik gecachet.
+  // vendor/pdf-lib/fontkit.umd.min.js en vendor/fonts/NotoSans-Regular.ttf (alleen nodig voor tekst
+  // buiten WinAnsi, bijv. Grieks/Cyrillisch) worden bij eerste gebruik gecachet.
 ];
 
 self.addEventListener('install', (event) => {
@@ -115,7 +124,7 @@ self.addEventListener('fetch', (event) => {
     const cached = await caches.match(request, { ignoreSearch: true });
     if (cached) return cached;
     const response = await fetch(request);
-    if (response.ok && url.pathname.includes('/vendor/pdfjs/')) {
+    if (response.ok && url.pathname.includes('/vendor/')) {
       const copy = response.clone();
       caches.open(RUNTIME_CACHE).then((c) => c.put(request, copy)).catch(() => {});
     }

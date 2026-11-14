@@ -1,4 +1,6 @@
 // fix-1
+// fix-2: savePdf/sharePdf accepteren ook een Promise<Blob> (PDF met aantekeningen wordt nog gemaakt):
+//        de bestandskiezer wordt dan eerst geopend (binnen de gebruikersactie) en daarna pas geschreven.
 // Module "save": opslaan van de originele bytes, met feature-detectie.
 // Volgorde: 1) showSaveFilePicker  2) Web Share met bestand  3) <a download>.
 
@@ -44,8 +46,13 @@ const isAbort = (e) => e && e.name === 'AbortError';
  * (picker en share vereisen een user gesture).
  * @returns {Promise<'saved'|'shared'|'downloaded'|'cancelled'>}
  */
-export async function savePdf(blob, fileName) {
-  const pdfBlob = blob.type === 'application/pdf' ? blob : new Blob([blob], { type: 'application/pdf' });
+export async function savePdf(blobOrPromise, fileName) {
+  const getBlob = async () => {
+    const b = await blobOrPromise;
+    return b.type === 'application/pdf' ? b : new Blob([b], { type: 'application/pdf' });
+  };
+  // Is de inhoud al klaar, dan meteen; anders pas na de kiezer.
+  let pdfBlob = blobOrPromise instanceof Blob ? await getBlob() : null;
 
   if (hasSavePicker()) {
     let handle = null;
@@ -64,16 +71,19 @@ export async function savePdf(blob, fileName) {
           throw e;
         }
       }
+      if (!pdfBlob) pdfBlob = await getBlob();
       const writable = await handle.createWritable();
       await writable.write(pdfBlob);
       await writable.close();
       return 'saved';
     } catch (e) {
       if (isAbort(e)) return 'cancelled';
+      if (e && e.name === 'ExportError') throw e;
       // Andere fout: val terug op de volgende route.
     }
   }
 
+  if (!pdfBlob) pdfBlob = await getBlob();
   if (canShareFile(pdfBlob, fileName)) {
     try {
       await sharePdf(pdfBlob, fileName);
@@ -88,7 +98,8 @@ export async function savePdf(blob, fileName) {
   return 'downloaded';
 }
 
-export async function sharePdf(blob, fileName) {
+export async function sharePdf(blobOrPromise, fileName) {
+  const blob = await blobOrPromise;
   const file = new File([blob], fileName, { type: 'application/pdf' });
   await navigator.share({ files: [file], title: fileName });
 }
