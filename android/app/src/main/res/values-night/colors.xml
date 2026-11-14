@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- fix-3: donkere modus (zelfde achtergrond als de web-app) -->
+<resources>
+    <color name="pdfreader_achtergrond">#16181C</color>
+</resources>

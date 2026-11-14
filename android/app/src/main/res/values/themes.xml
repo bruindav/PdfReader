@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- fix-3 -->
+<resources>
+    <!-- De app tekent zelf tot onder de systeembalken (edge-to-edge, verplicht vanaf Android 15);
+         MainActivity zet de juiste marges en kleuren. -->
+    <style name="Theme.PdfReader" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:colorPrimary">@color/pdfreader_blauw</item>
+        <item name="android:colorAccent">@color/pdfreader_blauw</item>
+        <item name="android:windowBackground">@color/pdfreader_achtergrond</item>
+    </style>
+</resources>

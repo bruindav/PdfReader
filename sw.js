@@ -1,8 +1,9 @@
 // fix-1
 // fix-2: aantekeningen-modules en pdf-lib in de precache; fontkit + Noto Sans in de runtime-cache.
+// fix-3: js/android-bridge.js (koppeling met de Android-app) in de precache.
 // PdfReader service worker: offline app-shell + ontvangst van gedeelde PDF's (share_target).
 // Verhoog VERSION bij elke release, zodat gebruikers de melding "Nieuwe versie beschikbaar" krijgen.
-const VERSION = 'fix-2';
+const VERSION = 'fix-3';
 const SHELL_CACHE = `pdfreader-shell-${VERSION}`;
 const RUNTIME_CACHE = `pdfreader-runtime-${VERSION}`;
 const SHARE_CACHE = 'pdfreader-share';
@@ -26,6 +27,7 @@ const SHELL = [
   'js/annot-model.js',
   'js/annot-store.js',
   'js/annot-export.js',
+  'js/android-bridge.js',
   // pdf-lib (lazy geladen bij opslaan met aantekeningen; vooraf gecachet zodat het ook offline werkt).
   'vendor/pdf-lib/pdf-lib.esm.min.js',
   'icons/icon.svg',
