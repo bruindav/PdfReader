@@ -1,4 +1,6 @@
 // fix-3
+// fix-4: controle vóór verzenden (niet leeg, begint met %PDF-), 'save-abort' bij leesfouten,
+//        duidelijke foutcodes (AndroidSaveError) en resultaten die na een herstart van de app binnenkomen.
 // Module "android-bridge": koppeling met de Android-app (WebView-schil, map android/).
 // Alleen actief als de Android-app het object `PdfReaderAndroid` heeft geïnjecteerd. De app doet dat
 // via WebViewCompat.addWebMessageListener, uitsluitend voor de origin https://bruindav.github.io.
@@ -9,16 +11,26 @@
 //   web → app:  {type:'ready', v:1}
 //               {type:'save-begin', id, name, size, action:'save'|'share'}
 //               ArrayBuffer | {type:'save-chunk', id, b64}   (herhaald)
-//               {type:'save-end', id}
+//               {type:'save-end', id} | {type:'save-abort', id}
 //   app → web:  {type:'hello', v:1, binary:boolean}
 //               {type:'file-begin', id, name, size}
 //               ArrayBuffer | {type:'file-chunk', id, b64}   (herhaald)
 //               {type:'file-end', id} | {type:'file-error', id?, code}
-//               {type:'save-result', id, status:'saved'|'shared'|'cancelled'|'error'|'too-big'}
+//               {type:'save-result', id, name, status:'saved'|'shared'|'cancelled'|'error'|'too-big'|'empty'|
+//                                                     'incomplete'|'not-pdf'|'write-failed'|'lost'}
 
 const BRIDGE_NAME = 'PdfReaderAndroid';
 const CHUNK = 512 * 1024; // bytes per bericht
 export const MAX_BYTES = 200 * 1024 * 1024;
+
+/** Fout bij opslaan/delen via de Android-app; `code` is de status van de app of een eigen controle. */
+export class AndroidSaveError extends Error {
+  constructor(code) {
+    super(`android-save-${code}`);
+    this.name = 'AndroidSaveError';
+    this.code = code;
+  }
+}
 
 const bridge = () => {
   const b = globalThis[BRIDGE_NAME];
@@ -30,13 +42,22 @@ export const isAndroidApp = () => !!bridge();
 
 let binary = false;
 let started = false;
-let handlers = { onFile: null, onError: null };
+let handlers = { onFile: null, onError: null, onSaveResult: null };
 let incoming = null; // { id, name, size, parts: [], received }
 let nextSaveId = 1;
 const pendingSaves = new Map(); // id -> {resolve, reject}
 let saveChain = Promise.resolve();
 
 const send = (obj) => bridge().postMessage(JSON.stringify(obj));
+
+function hasMagic(head) {
+  const m = [0x25, 0x50, 0x44, 0x46, 0x2d]; // "%PDF-"
+  outer: for (let i = 0; i <= head.length - m.length; i++) {
+    for (let j = 0; j < m.length; j++) if (head[i + j] !== m[j]) continue outer;
+    return true;
+  }
+  return false;
+}
 
 function b64ToBytes(b64) {
   const s = atob(b64);
@@ -98,10 +119,14 @@ function onMessage(event) {
       break;
     case 'save-result': {
       const p = pendingSaves.get(msg.id);
-      if (!p) break;
+      if (!p) {
+        // Resultaat van een opslag van vóór een herstart van de app/pagina: alleen melden.
+        if (handlers.onSaveResult) handlers.onSaveResult(String(msg.status || 'error'), String(msg.name || ''));
+        break;
+      }
       pendingSaves.delete(msg.id);
       if (msg.status === 'saved' || msg.status === 'shared' || msg.status === 'cancelled') p.resolve(msg.status);
-      else p.reject(new Error(`android-save-${msg.status || 'error'}`));
+      else p.reject(new AndroidSaveError(String(msg.status || 'error')));
       break;
     }
     default:
@@ -118,7 +143,7 @@ export function initAndroidBridge(h) {
   const b = bridge();
   if (!b || started) return false;
   started = true;
-  handlers = { onFile: h.onFile || null, onError: h.onError || null };
+  handlers = { onFile: h.onFile || null, onError: h.onError || null, onSaveResult: h.onSaveResult || null };
   b.onmessage = onMessage;
   send({ type: 'ready', v: 1 });
   return true;
@@ -127,14 +152,33 @@ export function initAndroidBridge(h) {
 async function transfer(blobOrPromise, fileName, action) {
   const raw = await blobOrPromise; // kan ExportError gooien (PDF met aantekeningen)
   const blob = raw instanceof Blob ? raw : new Blob([raw], { type: 'application/pdf' });
-  if (blob.size > MAX_BYTES) throw new Error('android-save-too-big');
+  if (blob.size > MAX_BYTES) throw new AndroidSaveError('too-big');
+  if (!blob.size) throw new AndroidSaveError('empty');
+  let head;
+  try {
+    head = new Uint8Array(await blob.slice(0, 1024).arrayBuffer());
+  } catch {
+    throw new AndroidSaveError('unreadable');
+  }
+  if (!hasMagic(head)) throw new AndroidSaveError('not-pdf');
+
   const id = nextSaveId++;
   const result = new Promise((resolve, reject) => pendingSaves.set(id, { resolve, reject }));
   send({ type: 'save-begin', id, name: fileName, size: blob.size, action });
-  for (let off = 0; off < blob.size; off += CHUNK) {
-    const buf = await blob.slice(off, off + CHUNK).arrayBuffer();
-    if (binary) bridge().postMessage(buf);
-    else send({ type: 'save-chunk', id, b64: bytesToB64(new Uint8Array(buf)) });
+  let sent = 0;
+  try {
+    for (let off = 0; off < blob.size; off += CHUNK) {
+      const buf = await blob.slice(off, off + CHUNK).arrayBuffer();
+      if (!buf.byteLength) throw new Error('leeg stuk');
+      sent += buf.byteLength;
+      if (binary) bridge().postMessage(buf);
+      else send({ type: 'save-chunk', id, b64: bytesToB64(new Uint8Array(buf)) });
+    }
+    if (sent !== blob.size) throw new Error('onvolledig');
+  } catch {
+    pendingSaves.delete(id);
+    send({ type: 'save-abort', id });
+    throw new AndroidSaveError('unreadable');
   }
   send({ type: 'save-end', id });
   return result;

@@ -1,6 +1,9 @@
 // fix-1
 // fix-2: aantekeningen (tekenmodus), opslaan met/zonder aantekeningen, bevestigingsdialoog.
 // fix-3: Android-app (WebView): PDF's uit "Openen met"/delen/bestandskiezer komen via android-bridge.js binnen.
+// fix-4: bij openen worden de bytes eenmaal in het geheugen gekopieerd (doc.blob), zodat "Origineel opslaan"
+//        niet afhangt van een bestand/content://-adres dat later niet meer leesbaar is; duidelijke meldingen
+//        als opslaan via de Android-app mislukt.
 // PdfReader – hoofdmodule: koppelt UI, loader, viewer, aantekeningen, opslaan en service worker.
 import { bus } from './eventbus.js';
 import { loadPdf, LoadError } from './loader.js';
@@ -10,7 +13,7 @@ import { getZoomPref, setZoomPref, getDocState, setDocState, clearHistory } from
 import { announce, toast, openDialog, anyDialogOpen, wireDialogCloseButtons, setDisabled } from './ui.js';
 import { initInstall, isIOS, maybeShowIosHelpOnce } from './install.js';
 import { Annotations } from './annotations.js';
-import { isAndroidApp, initAndroidBridge } from './android-bridge.js';
+import { isAndroidApp, initAndroidBridge, AndroidSaveError } from './android-bridge.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -139,6 +142,22 @@ async function openBlob(blob, name) {
     if (!hadDoc) els.spinner.classList.remove('verborgen');
   }, 300);
 
+  // Eén kopie van de bytes in het geheugen houden: de oorspronkelijke File kan naar een bestand of
+  // content://-adres verwijzen dat later leeg of onleesbaar is. pdf.js krijgt daar weer een eigen kopie
+  // van (loadPdf leest de Blob opnieuw; die buffer wordt naar de worker overgedragen).
+  const origName = name || (blob && blob.name) || '';
+  try {
+    const bytes = await blob.arrayBuffer();
+    blob = new Blob([bytes], { type: 'application/pdf' });
+  } catch (e) {
+    clearTimeout(spinTimer);
+    if (seq !== loadSeq) return;
+    const oom = e instanceof RangeError || /memory|allocation/i.test(String(e && e.message));
+    showError(oom ? 'too-big' : 'unknown', hadDoc);
+    return;
+  }
+  if (seq !== loadSeq) { clearTimeout(spinTimer); return; }
+
   let pdf;
   let lastPassword = null;
   try {
@@ -166,7 +185,7 @@ async function openBlob(blob, name) {
   clearTimeout(spinTimer);
   if (seq !== loadSeq) { pdf.destroy(); return; }
 
-  const fileName = name || (blob && blob.name) || '';
+  const fileName = origName;
   const fp = (pdf.fingerprints && pdf.fingerprints[0]) || null;
   const saved = fp ? getDocState(fp) : null;
   const zoom = (saved && saved.zoom) || getZoomPref() || (isMobileLayout() ? 'width' : 'auto');
@@ -496,6 +515,22 @@ function saveContent() {
   return { content: saveState.pending, annotated: true };
 }
 
+const ANDROID_SAVE_MESSAGES = {
+  empty: 'Opslaan is niet gelukt: het bestand was leeg. Open de PDF opnieuw en probeer het nog eens.',
+  unreadable: 'Opslaan is niet gelukt: de PDF kon niet meer worden gelezen. Open de PDF opnieuw en probeer het nog eens.',
+  'not-pdf': 'Opslaan is niet gelukt: de inhoud is geen geldige PDF. Open de PDF opnieuw en probeer het nog eens.',
+  incomplete: 'Opslaan is niet gelukt: het bestand kwam niet volledig over. Probeer het opnieuw.',
+  'write-failed': 'Opslaan is niet gelukt: er kon niet naar de gekozen map worden geschreven. Het lege bestand is verwijderd. Kies een andere map (bijvoorbeeld Downloads) en probeer het opnieuw.',
+  lost: 'Opslaan is niet gelukt: de app werd tussendoor herstart. Het lege bestand is verwijderd. Probeer het opnieuw.',
+  'too-big': 'Opslaan is niet gelukt: het bestand is te groot (maximaal 200 MB).',
+};
+
+/** Tekst voor een mislukte opslag (fix-4: specifiek voor de Android-app). */
+function saveErrorText(err) {
+  if (err instanceof AndroidSaveError && ANDROID_SAVE_MESSAGES[err.code]) return ANDROID_SAVE_MESSAGES[err.code];
+  return 'Opslaan is niet gelukt. Probeer het opnieuw.';
+}
+
 function exportFailed() {
   toast('Opslaan met aantekeningen is niet gelukt. Probeer het opnieuw.', {
     type: 'fout',
@@ -510,8 +545,8 @@ async function saveOriginalDirect() {
   try {
     const result = await savePdf(doc.blob, name);
     if (result === 'saved') toast(`Opgeslagen als ${name}`, { type: 'succes' });
-  } catch {
-    toast('Opslaan is niet gelukt. Probeer het opnieuw.', { type: 'fout' });
+  } catch (err) {
+    toast(saveErrorText(err), { type: 'fout', duration: 10000 });
   }
 }
 
@@ -540,7 +575,7 @@ $('form-opslaan').addEventListener('submit', async (e) => {
     }
   } catch (err) {
     if (annotated && err && err.name === 'ExportError') exportFailed();
-    else toast('Opslaan is niet gelukt. Probeer het opnieuw.', { type: 'fout' });
+    else toast(saveErrorText(err), { type: 'fout', duration: 10000 });
   }
 });
 
@@ -556,7 +591,7 @@ $('btn-delen').addEventListener('click', async () => {
   } catch (err) {
     if (err && err.name === 'AbortError') return;
     if (annotated && err && err.name === 'ExportError') exportFailed();
-    else toast('Opslaan is niet gelukt. Probeer het opnieuw.', { type: 'fout' });
+    else toast(saveErrorText(err), { type: 'fout', duration: 10000 });
   }
 });
 
@@ -749,6 +784,13 @@ function initAndroid() {
       openBlob(file, file.name);
     },
     onError: (code) => showError(code, !!doc),
+    // Resultaat van een opslag die vóór een herstart van de app begon.
+    onSaveResult: (status, name) => {
+      if (status === 'saved') toast(name ? `Opgeslagen als ${name}` : 'Opgeslagen', { type: 'succes' });
+      else if (status !== 'cancelled' && status !== 'shared') {
+        toast(saveErrorText(new AndroidSaveError(status)), { type: 'fout', duration: 10000 });
+      }
+    },
   });
 }
 
