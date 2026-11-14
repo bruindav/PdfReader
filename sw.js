@@ -1,9 +1,10 @@
 // fix-1
 // fix-2: aantekeningen-modules en pdf-lib in de precache; fontkit + Noto Sans in de runtime-cache.
 // fix-3: js/android-bridge.js (koppeling met de Android-app) in de precache.
+// fix-4: nieuwe versie (robuuster opslaan in de Android-app).
 // PdfReader service worker: offline app-shell + ontvangst van gedeelde PDF's (share_target).
 // Verhoog VERSION bij elke release, zodat gebruikers de melding "Nieuwe versie beschikbaar" krijgen.
-const VERSION = 'fix-3';
+const VERSION = 'fix-4';
 const SHELL_CACHE = `pdfreader-shell-${VERSION}`;
 const RUNTIME_CACHE = `pdfreader-runtime-${VERSION}`;
 const SHARE_CACHE = 'pdfreader-share';
